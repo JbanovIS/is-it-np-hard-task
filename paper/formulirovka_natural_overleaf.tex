@@ -1,0 +1,169 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1,T2A]{fontenc}
+\usepackage[russian]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage[margin=2.5cm]{geometry}
+
+\begin{document}
+
+\section*{Формулировка задачи поиска схемы загрузки активной зоны в форме математического программирования}
+
+\subsection*{Управляемые переменные}
+
+Пусть активная зона реактора содержит $N$ позиций в секторе симметрии 1/3. Введём следующие управляемые переменные:
+
+\textbf{Переменная 1 --- выбор шаблона:}
+
+\begin{equation}
+T \in \mathcal{T}
+\end{equation}
+
+где $\mathcal{T}$ --- заданное конечное множество допустимых шаблонов.
+
+\textbf{Определение шаблона.} Шаблон $T$ представляет собой бинарную матрицу
+
+\begin{equation}
+T = (\tau_{bi}) \in \{0,1\}^{3 \times N}, \quad b \in \{0,1,2\},\; i = 1,\ldots,N
+\end{equation}
+
+где $\tau_{bi} = 1$, если позиция $i$ в шаблоне отнесена к типу $b$ (0 --- свежая, 1 --- однажды выгоревшая, 2 --- дважды выгоревшая), и $\tau_{bi} = 0$ в противном случае.
+
+Поскольку каждая позиция должна иметь ровно один тип, матрица $T$ обязана удовлетворять условию:
+
+\begin{equation}
+\sum_{b=0}^{2} \tau_{bi} = 1, \quad \forall\, i = 1,\ldots,N
+\end{equation}
+
+Шаблон $T$ однозначно определяет разбиение позиций сектора на три непересекающихся подмножества:
+
+\begin{equation}
+\mathcal{P}_b(T) = \{\, i \,:\, \tau_{bi} = 1 \,\}, \quad b \in \{0,1,2\}
+\end{equation}
+
+\begin{equation}
+\mathcal{P}_0(T) \cup \mathcal{P}_1(T) \cup \mathcal{P}_2(T) = \mathcal{P}, \quad \mathcal{P}_k(T) \cap \mathcal{P}_l(T) = \varnothing \;\; (k \neq l)
+\end{equation}
+
+\begin{equation}
+|\mathcal{P}_k(T)| = N_k, \quad N_0 + N_1 + N_2 = N
+\end{equation}
+
+--- позиции для свежих, однажды и дважды выгоревших ТВС соответственно.
+
+Множество допустимых шаблонов $\mathcal{T}$ --- это заранее заданный (например, отобранный экспертным путём) список таких матриц, удовлетворяющих указанному условию и дополнительным физическим требованиям (соотношение $N_0, N_1, N_2$).
+
+\textbf{Переменная 2 --- назначение видов свежих ТВС на позиции:}
+
+\begin{equation}
+\sigma_0 : \mathcal{P}_0 \to \mathcal{F}
+\end{equation}
+
+где $\mathcal{F} = \{f_1, \ldots, f_M\}$ --- множество доступных видов свежих ТВС (виды различаются обогащением по $^{235}\text{U}$, количеством твэг с выгорающим поглотителем и его концентрацией). Функция $\sigma_0$ сопоставляет каждой позиции $i \in \mathcal{P}_0$ вид свежей ТВС $\sigma_0(i) \in \mathcal{F}$. Одному виду может соответствовать несколько позиций.
+
+\textbf{Переменная 3 --- перестановка однажды выгоревших ТВС:}
+
+\begin{equation}
+\sigma_1 : \mathcal{P}_1 \to \mathcal{U}_1
+\end{equation}
+
+где $\mathcal{U}_1 = \{u_1^{(1)}, \ldots, u_{N_0}^{(1)}\}$ --- набор конкретных однажды выгоревших ТВС из предыдущего цикла ($|\mathcal{U}_1| = N_0$). Функция $\sigma_1$ является инъекцией: каждая ТВС из $\mathcal{U}_1$ устанавливается не более чем в одну позицию.
+
+\textbf{Переменная 4 --- перестановка дважды выгоревших ТВС:}
+
+\begin{equation}
+\sigma_2 : \mathcal{P}_2 \to \mathcal{U}_2
+\end{equation}
+
+где $\mathcal{U}_2 = \{u_1^{(2)}, \ldots, u_{N_0}^{(2)}\}$ --- набор конкретных дважды выгоревших ТВС ($|\mathcal{U}_2| = N_0$). Функция $\sigma_2$ также является инъекцией.
+
+Совокупное решение задаётся четвёркой:
+
+\begin{equation}
+\mathbf{s} = (T,\; \sigma_0,\; \sigma_1,\; \sigma_2)
+\end{equation}
+
+\subsection*{Целевая функция}
+
+Требуется найти $\mathbf{s}$, доставляющее максимум функции:
+
+\begin{equation}
+\max_{\mathbf{s}}\; F(\mathbf{s}) = -\mathrm{LCOE}(\mathbf{s}) - \sum_{c \in \mathcal{C}} \gamma_c \cdot \Phi\left(v_c(\mathbf{s}),\; \bar{v}_c\right) + 1 \times \delta_{v_c(\mathbf{s}) \leq \bar{v}_c}
+\end{equation}
+
+где:
+\begin{itemize}
+\item $\mathrm{LCOE}(\mathbf{s})$ --- нормированная стоимость выработки электроэнергии за топливный цикл;
+\item $\mathcal{C}$ --- множество ограничивающих физических параметров ($|\mathcal{C}| \sim 5$--$10$);
+\item $\gamma_c > 0$ --- весовой коэффициент для параметра $c$;
+\item $v_c(\mathbf{s})$ --- значение $c$-го физического параметра при схеме $\mathbf{s}$, вычисляемое расчётным кодом;
+\item $\bar{v}_c$ --- допустимый предел по параметру $c$;
+\item $\Phi(v_c(\mathbf{s}), \bar{v}_c)$ --- штрафная функция нарушения ограничения:
+\end{itemize}
+
+\begin{equation}
+\Phi\left(v_c(\mathbf{s}),\; \bar{v}_c\right) = \delta_{v_c(\mathbf{s}) > \bar{v}_c} \cdot \left(\frac{v_c(\mathbf{s}) - \bar{v}_c}{\bar{v}_c}\right)^2
+\end{equation}
+
+где $\delta_{v_c > \bar v_c}$ --- индикаторная функция (равна 1, если условие выполняется, иначе 0).
+
+\subsection*{Система ограничений}
+
+\textbf{Г1 --- Выбор шаблона из допустимого множества:}
+
+\begin{equation}
+T \in \mathcal{T}
+\end{equation}
+
+\textbf{Г2 --- Каждая позиция для свежих ТВС получает ровно один вид ТВС:}
+
+\begin{equation}
+\sigma_0(i) \in \mathcal{F}, \quad \forall\, i \in \mathcal{P}_0(T)
+\end{equation}
+
+\textbf{Г3 --- Каждая позиция для однажды выгоревших ТВС получает ровно одну конкретную ТВС:}
+
+\begin{equation}
+\sigma_1(i) \in \mathcal{U}_1, \quad \forall\, i \in \mathcal{P}_1(T)
+\end{equation}
+
+\textbf{Г4 --- Каждая позиция для дважды выгоревших ТВС получает ровно одну конкретную ТВС:}
+
+\begin{equation}
+\sigma_2(i) \in \mathcal{U}_2, \quad \forall\, i \in \mathcal{P}_2(T)
+\end{equation}
+
+\textbf{Г5 --- Инъективность назначения однажды выгоревших ТВС} (одна ТВС не может стоять в двух позициях одновременно):
+
+\begin{equation}
+\sigma_1(i) \neq \sigma_1(i'), \quad \forall\, i \neq i',\quad i, i' \in \mathcal{P}_1(T)
+\end{equation}
+
+\textbf{Г6 --- Инъективность назначения дважды выгоревших ТВС:}
+
+\begin{equation}
+\sigma_2(i) \neq \sigma_2(i'), \quad \forall\, i \neq i',\quad i, i' \in \mathcal{P}_2(T)
+\end{equation}
+
+\textbf{Г7 --- Область определения решения:}
+
+\begin{equation}
+\mathbf{s} = (T,\; \sigma_0,\; \sigma_1,\; \sigma_2), \quad T \in \mathcal{T},\quad \sigma_0 \in \mathcal{F}^{\mathcal{P}_0},\quad \sigma_1 \in \mathrm{Inj}(\mathcal{P}_1, \mathcal{U}_1),\quad \sigma_2 \in \mathrm{Inj}(\mathcal{P}_2, \mathcal{U}_2)
+\end{equation}
+
+где $\mathrm{Inj}(\mathcal{P}_k, \mathcal{U}_k)$ --- множество всех инъекций из $\mathcal{P}_k$ в $\mathcal{U}_k$.
+
+\subsection*{Итоговая запись задачи}
+
+\begin{equation}
+\max_{\mathbf{s} \in \mathcal{S}}\; F(\mathbf{s}) = -\mathrm{LCOE}(\mathbf{s}) - \sum_{c \in \mathcal{C}} \gamma_c \cdot \Phi\left(v_c(\mathbf{s}),\; \bar{v}_c\right) + 1 \times \delta_{v_c(\mathbf{s}) \leq \bar{v}_c}
+\end{equation}
+
+при ограничениях Г1--Г7,
+
+где допустимое множество $\mathcal{S}$ --- совокупность всех четвёрок $(T, \sigma_0, \sigma_1, \sigma_2)$, удовлетворяющих ограничениям Г1--Г7. Размер $|\mathcal{S}|$ экспоненциально зависит от $N$, $M$, $N_0$ и на практике достигает $\sim 10^{100}$ и выше, что исключает точный перебор.
+
+\textit{Замечание об асимметрии переменных.} Функция $\sigma_0$ не является инъекцией --- один вид свежей ТВС может стоять в нескольких позициях, поэтому ограничение Г2 мягче, чем Г5--Г6. Функции $\sigma_1$ и $\sigma_2$ --- строго инъективны, поскольку речь идёт о конкретных физических объектах, которые нельзя поставить в два места сразу. Это содержательное различие между «выбором вида» и «перестановкой конкретных объектов» является ключевой структурной особенностью данной задачи.
+
+
+\end{document}

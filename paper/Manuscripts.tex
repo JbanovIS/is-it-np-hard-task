@@ -1,0 +1,555 @@
+\documentclass[a4paper]{article}
+%  various packages that you may wish to activate for usage 
+\usepackage{adjustbox}
+\usepackage[top=1.in, bottom=1.in, left=1.in, right=1.in]{geometry}
+%\setlist[itemize]{leftmargin=*}
+\usepackage{nopageno}
+\usepackage{tabls}
+\usepackage{cites}
+\usepackage{epsf}
+\usepackage{appendix}
+\usepackage{ragged2e}
+\usepackage{mathtools}
+\usepackage{mdframed}
+\usepackage{caption}
+\usepackage{physics}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{braket}
+\usepackage{booktabs}
+\usepackage[flushleft]{threeparttable}
+%packages taken from NEORL -----------------
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{nomencl} % Nomenclature package
+\makenomenclature
+\usepackage{tikz}
+\usepackage{graphicx}
+% --- Define the style of the tables and figures 
+\usepackage{float}
+\floatstyle{plaintop}
+\restylefloat{table}
+
+\floatstyle{plain}
+\restylefloat{figure}
+\usepackage{amssymb}
+\usepackage{pifont}
+\usepackage{amsmath} % --- align equation
+
+%%%%% -------------------------------------- Remove first page
+%\usepackage{atbegshi}% http://ctan.org/pkg/atbegshi
+%\AtBeginDocument{\AtBeginShipoutNext{\AtBeginShipoutDiscard}}
+
+%%%%% --------------------------------------
+\newcommand{\defeq}{\vcentcolon=}
+\newcommand{\eqdef}{=\vcentcolon}
+
+\newcommand{\cmark}{\ding{52}}%
+\newcommand{\xmark}{\ding{53}}%
+\captionsetup{width=1.0\textwidth,font={bf,normalsize},skip=0.3cm,within=none,justification=centering}
+\definecolor{light-gray}{gray}{0.95}
+\newcommand{\code}[1]{\colorbox{light-gray}{\small\color{blue}\textbf{\texttt{#1}}}}
+
+\def\bmheadfont{\reset@font\fontfamily{\rmdefault}\fontsize{10bp}{12bp}\bfseries\selectfont\raggedright\boldmath}%
+\newcommand\bmhead{\@startsection{subparagraph}{5}{\z@}%
+                                 {6pt \@plus1ex \@minus .2ex}%
+                                 {-1em}%
+                                 {\bmheadfont}}
+
+%\usepackage{hyperref,xcolor}
+%\RequirePackage{graphicx,ifthen,amsmath,rotating,url}
+% Page layout stuff
+%
+%\RequirePackage{setspace}
+%\RequirePackage{indentfirst}
+%\RequirePackage{fancyhdr}
+%\RequirePackage{afterpage}
+%\RequirePackage{graphicx,ifthen,amsmath,rotating,url}
+%\RequirePackage{times}
+\usepackage{url}
+%\RequirePackage{ifpdf}
+\urlstyle{rm}
+%\raggedright
+%\usepackage{abstract}
+
+
+%%%%%%%%%%%%%%%%%%%%%%
+% Define 'abstract' environment and 'keywords' command
+%
+%\renewenvironment{abstract}{ \centering \textbf{ABSTRACT}  \begin{list}{}{\setlength{\leftmargin}{0.3in}\setlength{\rightmargin}{0.3in}\setlength{\topsep}{0in}\normalsize}
+%  \item
+%}{
+%  \end{list}
+%}
+
+%\newcommand{\keywords}[1]{
+%  \vspace{-1em}
+%  \begin{raggedright}
+%    \begin{list}{}{\setlength{\leftmargin}{0.0in}\setlength{\rightmargin}{0.5in}\normalsize}
+%    \item[] \ignorespaces KEYWORDS: \upshape #1
+%    \end{list}
+%  \end{raggedright}
+%}
+
+% Keywords command
+\providecommand{\keywords}[1]
+{
+  \small	
+  \textbf{\textit{Keywords---}} #1
+}
+% -------------------
+
+% ------------------- Title and Authors
+\title{Assessment of Reinforcement Learning Algorithms \\ for Nuclear Power Plant Fuel Optimization}
+\author{
+  \textbf{Paul Seurin$^1$, Koroush Shirvan$^1$}\footnote{Corresponding author. \textit{E-mail address}: kshirvan@mit.edu (K. Shirvan)} \\
+  \\
+  $^1$Massachusetts Institute of Technology \\
+77 Massachusetts Avenue, Cambridge MA, 02139
+\\ 
+  \url{paseurin@mit.edu}, \url{kshirvan@mit.edu}
+}
+\date{} % Comment this line to show today's date
+
+
+\begin{document}
+
+\maketitle
+% -------------------
+
+% ------------------- Abstract
+
+\justify 
+\begin{abstract}
+The nuclear fuel loading pattern optimization problem belongs to the class
+of large-scale combinatorial optimization. It is also characterized by multiple objectives and constraints, which makes it impossible to solve explicitly. Stochastic optimization methodologies including Genetic Algorithms and Simulated Annealing are used by different nuclear utilities and vendors but hand-designed solutions continue to be the prevalent method in the industry. To improve the state-of-the-art, Deep Reinforcement Learning (RL), in particular, Proximal Policy Optimization is leveraged. This work presents a first-of-a-kind approach to utilize deep RL to solve the loading pattern problem and could be leveraged for any engineering design optimization. This paper is also to our knowledge the first to propose a study of the behavior of several hyper-parameters that influence the RL algorithm. The algorithm is highly dependent on multiple factors such as the shape of the objective function derived for the core design that behaves as a fudge factor that affects the stability of the learning. But also an \textit{exploration/exploitation} trade-off that manifests through different parameters such as the number of loading patterns seen by the agents per episode, 
+the number of samples collected before a policy update \code{nsteps}, and an entropy factor \code{ent\_coef} that increases the randomness of the policy during training. We found that RL must be applied similarly to a Gaussian Process in which the acquisition function is replaced by a parametrized policy. Then, once an initial set of hyper-parameters is found, reducing \code{nsteps} and \code{ent\_coef} until no more learning is observed will result in the highest sample efficiency robustly and stably. This resulted in an economic benefit of 535,000 - 642,000 \$/year/plant. Future work must extend this research to multi-objective settings and comparing them to state-of-the-art implementation of stochastic optimization methods.
+\end{abstract} \hspace{10pt}
+\keywords{Fuel loading pattern, Optimization, Reinforcement Learning, Proximal Policy Optimization}
+% -------------------
+% ------------------- Place Title and abstract
+
+
+
+\begin{mdframed}
+\begin{table}[H]   
+% --- RL algorithm related nomenclatures
+\nomenclature{TRPO}{Trust Region Policy Optimization}
+\nomenclature{ACKTR}{Actor Critic using Kronecker-Factored Trust Region}
+\nomenclature{PG}{Policy Gradient}
+\nomenclature{A2C}{Advantage Actor Critic}
+\nomenclature{PPO}{Proximal Policy Optimization}
+\nomenclature{RL}{Reinforcement Learning}
+\nomenclature{FIM}{Fisher Information Matrix}
+% --- RL hyperparameters
+\nomenclature{\code{VF\_coef}}{Value Function Coefficient}
+\nomenclature{\code{ent\_coef}}{Entropy Coefficient}
+\nomenclature{\code{n\_steps}}{Number of steps per agent before parameter update}
+\nomenclature{\code{LR}}{Learning Rate}
+\nomenclature{\code{Clip} or $\epsilon$}{Clipping range}
+\nomenclature{\code{noptepochs}}{Number of epoch to run the gradient ascent}
+% --- Loading pattern optimization algorithm related nomenclature
+\nomenclature{NF}{Numframes: Number of pattern generated per episode}
+\nomenclature{LP}{Loading Pattern}
+\nomenclature{$N_{FA}$}{Number of fuel assemblies in the core}
+\nomenclature{FAs}{Fuel Assemblies}
+\nomenclature{BP}{Burnable Poison}
+\nomenclature{CRD}{Control Rods}
+\nomenclature{NPP}{Nuclear Power Plant}
+% --- Optimization related nomenclature
+\nomenclature{CO}{Combinatorial Optimization}
+\nomenclature{SO}{Stochastic Optimization}
+% --- Statistics
+\nomenclature{NT}{Nemenyi Test}
+\nomenclature{FT}{Friedman Test}
+\nomenclature{SE}{Sample Efficiency}
+\nomenclature{HT}{Hypothesis Testing}
+% ---  Write the nomenclature here
+\printnomenclature
+\end{table}
+\end{mdframed}
+
+\section{Introduction} 
+\label{sec:intro}
+The commercial Nuclear Power Plants (NPP)s in the USA, comprised of Pressurized Water Reactors (PWR)s and Boiling Water Reactors (BWR)s, represent the largest single source of carbon-free energy in the country, generating 20\% of the electricity use year-round. Nevertheless, existing power plants are threatened to shut down early as they fail to be economical against alternative ones such as gas power plants or heavily subsidized solar and wind. Optimizing the fuel cycle cost via the optimization of the core Loading Pattern (LP) is one way of combating this lack of competitiveness. The loading pattern optimization problem aims to optimize the fuel cycle cost which accounts for 20-30\% of the total cost of electricity generation for the existing fleet \cite{nei2020nuclear} while meeting operational, regulatory, and safety goals. For the remainder of the paper, the notation LCOE (Levelized Cost of Electricity) refers to the fuel cycle cost. To solve this problem, a reactor designer must choose a set of Fuel Assemblies (FAs) to refuel its reactor. A reactor is fueled with a certain number of solid FAs of two types to choose from: either fresh or burned.  The burned FAs (about two-thirds of them) have already been in the core for a certain period (here about 18 or 36 months), while the fresh FAs have not. There is also a discrete choice of fresh FAs (which corresponds to a discrete set of input parameters such as the average enrichment of the fuel). This problem, therefore, belongs to the class of Combinatorial Optimization (CO), which is a sub-field of applied mathematics combining techniques to solve problems over discrete structures. Without a suitable objective function, combinatorial problems require evaluations of all possibilities to ensure a global optimum is found. 
+
+For the loading pattern optimization, the size of the state space and the time to evaluate one candidate solution makes it prohibitive to utilize brute force enumeration. Furthermore, in this application, a closed-form objective function and analytical derivatives are not accessible. As such, Stochastic Optimization (SO) with heuristic methods has prevailed.  Simulated Annealing (SA) and Genetic Algorithm (GA) are utilized to drive the search in \cite{kropaczek2011copernicus,park2009multiobjective} and \cite{parks1996multiobjective} respectively. Ant Colony System (ACS), Particle Swarm Optimization (PSO), Cross-Entropy (CE), Population-based Incremental Learning (PBIL), and Artificial Bee Colonies (ABC) were also successfully leveraged \cite{moura2019optimization,meneses2015acrossentropy,lima2008anuclear}, while hybrid methods employing Quantum Evolutionary Algorithm (QEA) and Max-Min Ant System (MMAS) are utilized coupled with Tabu Search (TS) in \cite{wu2016quantum} and \cite{lin2014themaxmin}, respectively. This list is however non-exhaustive.
+
+Other classes of methods leverage Deep Learning from which Deep Reinforcement Learning (RL) also originates. Deep learning was experimented in \cite{erdogan2003apwr,li2022comparative} for PWR or \cite{ortiz2004using} for BWR, in which the authors utilized pre-trained neural networks to reduce the computational burden of evaluating a pattern candidate in their algorithms. The deep models can take as input the composition of what is contained inside a nuclear reactor, specifically the FAs. For instance, two important parameters namely the $k_{eff}$ (the effective neutron multiplication factor, which is a measure of the change in the fission neutron population in a multiplying system with leakages) and the power fraction are predicted by a single layer neural network in \cite{erdogan2003apwr} from the fuel assembly distribution in the core, which was trained with 2000 randomly generated LPs. Then a GA leverages this surrogate to evaluate candidates during the optimization of the Almaraz Power Plant in Spain. This resulted in the reduction of the computing time by a factor of 60. Nonetheless, there are several limitations in these papers: the Figures of Merits (FOMs) utilized for training are the only ones possible for optimization, which limits the surrogate application \cite{erdogan2003apwr}. Furthermore, it is known that after using a surrogate, the best pattern found must be hand-optimized because of the surrogate modeling discrepancy \cite{park2009multiobjective}. Very recently in \cite{li2022comparative}, two neural networks were pre-trained on almost 140,000 data points with almost 60,000 validating data points to predict $k_{eff}$ and another important parameter the power peak factor (ppf), respectively. The neural network-based optimization (accompanied with various heuristics such as GA or PSO) only spent 0.7\% of the computing time compared with using a reactor physic code. In spite of checking the accuracy of the trained model on new data points generated during the optimization to ensure the soundness of the model developed (which remained low), it took about 98 and 120 hours to pre-train the networks. Nevertheless, many more parameters must be considered for a real-world loading pattern optimization. This large training time and low accuracy on test data are evident impediments to seamless scaling to more FOMs. 
+
+Instead of replacing the core simulator, screening procedures could be utilized to improve the search process efficiency. In \cite{yamamoto2003application} a dynamically trained Neural Network was partially used as a screening procedure by evaluating a subset of the FOMs to screen out poor quality patterns accounting for errors in the surrogate, while a GA drives the search. In \cite{gocalvez2006sensitivity}, a neural network and two GAs are coupled to solve 
+LP design and the Burnable Poison (BP) assignment for the TMI-1 core. BPs are utilized in FAs to control the excess of power during the early operational cycle of a nuclear reactor before refueling. The Beginning of Cycle (BOC) $k_{\infty}$ (the infinite neutron multiplication factor, which is a measure of the change in the fission neutron population in an infinite multiplying system (e.g., reflected assembly) from one neutron generation to the subsequent generation) for each assembly is used to predict core parameters for the LP design problems, while BP design data are also used for the BP design problem. Two networks are trained for each problem, one being utilized as a fine filter while training only on solutions with higher fitness. This substantially increases the number of good candidates' pattern evaluations but is limited by the target FOMs trained to be represented by the surrogate, and the network has to be somehow dynamically retrained with the generated candidate to avoid failed extrapolation and poor accuracy. 
+
+On the other hand, Deep RL has been applied to solving CO Problems somewhat differently. For instance, in \cite{bello2016neural,khalil2017learning,li2021deep}, RL learning agents are optimizing by taking sequential decisions to build a candidate solution while receiving information (also known as reward signals) on the quality of solutions that it produces. The decisions could be which city to travel to next, and the reward be the length of a partial tour in case of the Traveling Salesman Problem (TSP). The trained network effectively learns the anatomy of a class of problems (e.g., all possible TSP with N-city distribution in $([0,1]^2)^N$ with 20 to 100 cities \cite{bello2016neural}), and can solve the ones with similar underlying structures in a matter of seconds \cite{li2021deep}. The network does not replace the computer program as utilized by the works mentioned in representing the pattern but infers how to construct the most optimal one. The neural networks output a set of action values rather than FOMs, which translates which actions to take to maximize the reward or objective function, which itself embeds the FOMs. Moreover, the network is learning a screening procedure online, while other methods require the careful preparation of datasets in advance. Previous works related to core optimization utilizing RL include \cite{lima2008anuclear}, in which Q-learning was leveraged to inform a “global updating rule” in an Ant Colony System (ACS), and in \cite{nissan1997upgrading} to automate revision rule-sets translated into a procedural language that a recurrent neural network can produce. However, the closest application of deep RL to core optimization can be found in \cite{radaideh2021physics} where the authors made the parallel between optimizing a nuclear fuel assembly and the classical application of RL to games, in which fuel designer tactics are implemented as rules of a game RL agents are trying to solve. With the help of expert rules, the authors found that RL outperforms classical heuristics methods such as GA and SA when the problem becomes large and challenging, which is the case for core optimization as well.
+
+In this work, agents are trained to build a LP for PWR optimization. The agents will sequentially construct different LPs by choosing the arrangement of FAs in the core, as well as their compositions. The reward will be based on an objective function that the core designer aims to maximize: the objective function will be a scalar value which contains the LCOE and key safety and operational constraints. SIMULATE3 \cite{rempe1989simulate}, a reactor physic code with licensing grade accuracy, will be utilized to obtained the figure of merits of interests. This paper studies the set of hyper-parameters that enable the agents to uncover high-quality LPs from the ground up in a reasonable amount of time. The main novelties of this work are listed as follows:
+\begin{itemize}
+    \item 
+    Propose a novel and innovative Deep RL-compliant framework to optimize large-scale constrained problems and employ it to the core loading pattern optimization, becoming the first application of deep RL to this problem.
+    \item
+    Provide a parameter sweep to tune hyper-parameters for RL, an intuition behind the behavior in response to a change in these parameters, and understand the role of \textit{exploration/exploitation} trade-off in the defined problem.
+    \item 
+    Utilize the Levelized Cost of Electricity (LCOE) to rigorously assess the true economic performance of the different algorithm configurations. 
+\end{itemize}
+
+The framework developed in this work is an extension of a work presented at the PHYSOR conference held in Pittsburgh in 2022 \cite{seurin2022pwr}, and is currently being utilized by Constellation (formerly known as Exelon) Corporation, 
+a leading U.S. nuclear electric power generation company. There, a simple hyper-parameter study applied to our problem was conducted. Nevertheless, here we prolong this study by deriving a problem-agnostic approach to obtain a sample efficient method to apply RL, which also extends to any engineering design problem. We however only deal with single-objective optimization. A multi-objective version of this work is also presented at the International Conference on Mathematics and Computational Methods Applied to Nuclear Science and Engineering (M\&C 2023) \cite{seurin2023pareto}. 
+
+In section \ref{sec:reinforcement} the theory of RL with the motivation behind the development of Proximal Policy Optimization (PPO) (section \ref{sec:solvingrlproblem}) as well as its major hyper-parameters (section \ref{sec:ppo_hyperparameters}) are given. Related works are presented in section \ref{sec:relatedwork}. In section \ref{sec:rlalgorithmicassessement}, the formulation of the loading pattern optimization in an RL-compliant setting and the description of the problem which will be used to illustrate the efficacy of this novel method are presented. The results are given in section \ref{sec:results} with a summary of the findings in this work in section \ref{sec:shortsummary}, and an application of the method derived is applied to classical benchmarks in section \ref{sec:applicationtobenchmark}. Lastly, section \ref{sec:conclusion} will conclude this work and present guidance for future studies.
+
+\section{Reinforcement Learning} 
+\label{sec:reinforcement}
+\subsection{Definition}
+\label{sec:defin}
+Neuro-Dynamic Programming or Deep Reinforcement Learning (RL) \cite{bertsekas1996neuro} is a class of Machine Learning algorithm that emerged from exact dynamic programming methods for high dimensional problems that suffer from daunting computational requirements. The RL framework is characterized by a trial and error scheme between the generation of experiences by one or several agents taking decisions (or actions), and the improvements of these decisions over time, with the help of a reward signal produced by an emulator for games or an objective function in case of optimization. Figure \ref{fig:rlscheme} summarizes the procedure:
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale = 0.8]{reinforcement_mechanism.png}
+    \caption{Classical RL iteration procedure. The policy is computed through a neural network in the figure. Each agent is following the same policy. The reinforcement mechanism is the algorithm (here PPO) that updates the parameter $\theta$ based on the agents' experiences.}
+    \label{fig:rlscheme}
+\end{figure}
+One or several agents in parallel are trained to take a sequence of actions $a \in \mathcal{A}$ from observable states $s \in \mathcal{S}$ following a policy: $a \sim \pi(\cdot,s;\theta_k)$, where $\theta_k$ is a learnable parameter to improve this sequence. A policy $\pi = (d_1,...)$ is a sequence of decision rules $d_i : \mathcal{S} -> \mathcal{A}$, which represents the probability of taking action $a \in \mathcal{A}$ being in state $s \in \mathcal{S}$. It specifies which action to take when in state $s$. Each action $a \in \mathcal{A}$ taken after observing a state $s \in \mathcal{S}$ generates a reward $r(s,a) \in \mathbb{R}$ or $r(s,a) \in \mathbb{R}^N$ in case of multi-objective RL. The number of actions taken, also named the length of an episode or the horizon, is denoted $\tau$. Over the course of an episode, a history $\mathcal{H} = (s_0,a_0,...,s_{\tau})$ is generated, on which the sum of rewards $\sum_{t = 0}^{\tau} r_t(a_t,s_t)$ must be maximized. The quality of the sequence is then defined through a value- or state-action value function $V^{\pi_{\theta}}(s;\theta) = \mathbb{E}_{\mathcal{H}}(\Sigma_{t = 0}^{\tau} r(s_t,\pi_{\theta}(s_t)))$ or $Q^{\pi_{\theta}}(s,a;\theta) = \mathbb{E}(\sum_{t \ge 0} r_(s_t,a_t)|s_0 = s,a_0 = a,a_t = \pi_{\theta}(s_t))$ (where $V^{\pi_{\theta}}(s_0;\theta) =  Q^{\pi_{\theta}}(s_0,\pi_{\theta}(s_0);\theta)$) respectively. The value function $V^{\pi_{\theta}}$(s) is the expected sum of rewards following a certain policy $\pi_{\theta}$ being in state $s$, while the action value function $Q^{\pi_{\theta}}(s,a)$ is the expected sum of rewards taking action $a$ being in this state going forward.  If the optimum policy $\pi^{\star}$ is found, following it would result in the highest value function. The classical formulation of the RL problem starting from an initial state $s_0$ then becomes:
+\begin{align*}
+    & \text{$\max_{\theta}$} \quad \mathbb{E}_{\mathcal{H}}(\Sigma_{t = 0}^{\tau} \gamma^t r(s_t,a_t)) =   Q^{\pi_{\theta}}(s_0,\pi_{\theta}(s_0);\theta) = V^{\pi_{\theta}}(s_0;\theta)\\
+    & \text{subject to} \quad a_t = \pi(s_t;\theta)
+\end{align*}
+
+where $\gamma \in [0,1]$ is a hyper-parameter added to favor short-term reward if closer to 0, which translates the appeal that early returns are more important than long-term ones (e.g, early return on investment are more attractive to investors). Additionally, it helps make the problem mathematically sound (e.g., prevents the cumulative reward to explode). Deep RL will refer to RL methods that utilize deep learning architectures to represent the value function and the policy. We will use the RL notation to denote both RL and deep RL interchangeably. Therefore $\theta$ could represent the weights in a neural network. The power of the RL mechanism lies in the possibility to exceed expert knowledge by training a policy based on a reward signal \cite{bengio2018machine}. Nevertheless, if the policy is poorly parameterized, or if the experiences are 
+not representative of the search space, the policy will perform inadequately \cite{bengio2018machine}. The latter is called the \textit{exploration/exploitation} trade-off. A sufficient amount of \textit{exploration} is necessary for the agents to get a proper representation of the search space, such that they can properly optimize their decisions during the \textit{exploitation} phase. 
+\subsection{Theory behind solving an RL problem}
+\label{sec:solvingrlproblem}
+There are two types of algorithms to solve this optimization: \textit{value iteration} and \textit{policy iteration}. The former class of methods benefited from many improvements \cite{hessel2018raindbow} and is widely used, but they were inferior to policy-based algorithms in particular Proximal Policy Optimization (PPO) \cite{schulman2017proximal} in our application. \textit{Policy iteration} is based on optimizing the policy directly by a parameterization $\pi(\cdot,\cdot |\theta)$. The problem to solve becomes 
+\[\max_{\pi(\cdot | \theta) \in \Pi} V(\pi(\cdot|\theta))\]
+where $\Pi$ is the manifold of smoothly parametrized policies.
+
+Policy-based algorithms have the advantage of simplicity by having fewer hyper-parameters to tune and also scale well for parallel computing. There are three types: tabular policy iteration, derivative-free optimization (e.g., covariance matrix adaptation (CMA), Cross Entropy Method (CEM)...), and policy gradients \cite{schulman2017trust}. Tabular policy-iteration-based approach cannot be leveraged due to the size of our search space. Derivative-free optimization approaches suffer from low sample complexity meaning that it requires more samples to collect (i.e, objective function evaluation) to obtain satisfying result and they do not behave well for large problems \cite{schulman2017trust}. This was one of the motivation for introducing advanced sample efficient (defined in \cite{botvinick2019reinforcement} as "The amount of data required for a learning system to attain any chosen target level of performance") gradient-based methods which already demonstrated superiority on supervised learning tasks in many instances \cite{schulman2017trust}.
+In the original policy gradient method, the parameter $\theta$ is updated by policy gradient ascent with the relation:
+\begin{equation}
+    \theta_{t+1} = \theta_t + \eta_t \nabla_{\theta}V(\pi(\theta))
+    \label{eq:policygradientupdates}
+\end{equation}
+where $\nabla_{\theta}V(\pi(\theta)) = \mathbb{E}_{\mathcal{H}}( \Sigma_{t = 1}^{\tau}R(\tau) \nabla_{\theta} \log \pi_{\theta}(a_t|s_t)))$. This formulation translates the fact that directions with high expected returns $R(\tau) = \sum_{t = 0}^{\tau - 1} \gamma^{'}r_t$ or $R(\tau) = \sum_{t^{'} = t}^{\tau - 1} \gamma^{t^{'}-t}r_{t^{'}}$ will be pushed with greater magnitude. The estimate of the gradient can be obtained by Monte-Carlo sampling over multiple trajectories, which led to classes of methods called REINFORCE \cite{williams1992simple}. This method suffers however from high variance, high sensitivity to step sizes, sample inefficiencies, and unstable learning \cite{wu2017scalable}.  One alternative to reduce the variance is to replace $R(\tau)$ with the advantage function $A_{\pi_{\theta}}(s,a;\theta) = Q^{\pi_{\theta}}(s,a;\theta) - V^{\pi_{\theta}}(s;\theta)$, which represents the additional expected return by taking action $a$ compared to the average expected return by taking random actions. 
+
+Nevertheless, these methods have lots of shortcomings. Therefore much research on alternative gradient techniques and improved loss functions were conducted. This yields a set of new policy gradient paradigms with Conservative Policy Iteration \cite{kakade2002approximately} and Natural policy gradient \cite{kakade2001anatural}, which led to Trust Region Policy Optimization \cite{schulman2017trust} and finally Proximal Policy Optimization (PPO) \cite{schulman2017proximal}. 
+
+PPO was developed as an improvement of TRPO. PPO is a trade-off between simplicity of implementation, tuning, and Sample Efficiency (SE). It is a major concern for RL, as the amount of data in real world problems is usually scarce per unit of computing time. This is the case in this work because of the slow time of the physics simulation software. Therefore the optimization techniques developed are primarily aimed at increasing this SE \cite{wu2017scalable}.  For this purpose, PPO relies on a clipping term and a learning rate to scale up to massive parallelism, which TRPO was struggling to do \cite{schulman2017proximal}. The PPO version utilized in this work is the first-order constraint-free clipping loss method, where the clipping plays the same role as the KL divergence in TRPO \cite{schulman2017trust}, ensuring that the policies between updates are close enough to each other and avoid catastrophic losses of performance. For the latter, if $r_t(\theta) = \frac{\pi_{\theta}}{\pi_{\theta_{old}}}$ is the \textit{probability ratio}, the new surrogate objective (presented as a loss) to  optimize is a clipped objective:
+\begin{equation}
+L^{clip}(\theta) = \mathbb{E}(\min(r_t(\theta)A(\theta),\text{clip}(1 - \epsilon,1 +\epsilon, r_t(\theta))A(\theta)))
+\label{eq:clipped_obj}
+\end{equation}
+where $\epsilon$ is an hyper parameter, which guarantee to penalize large policy updates. Indeed, it prevents the probability ratio to lies outside $[1-\epsilon,1+\epsilon]$. Moreover, as the advantage estimation $A_{\pi_{\theta}}(s,a;\theta)$ was used, another value loss $L^{VF}(\theta) = (V^{\pi_{\theta}}(s_t;\theta) - V_{target}(s_t))^2$ was introduced to ensure a proper approximation of the value function (which is used in the Generalized Advantage Estimation (GAE) to estimate $A_{\pi_{\theta}}(s,a;\theta)$ \cite{schulman2017proximal}). Lastly, an entropy term $H(\theta)$, which corresponds to the entropy of the policy distribution, was introduced to enhance exploration. The final loss becomes:
+\begin{equation}
+    L^{final}(\theta) = \mathbb{E}(L^{clip}(\theta) - c_1L^{VF}(\theta) + c_2 H(\theta))
+    \label{eq:ppoloss}
+\end{equation}
+
+where $c_1$ and $c_2$ are hyper-parameters (given by \code{vf\_coef} and \code{ent\_coef} in stable-baselines \cite{stable-baselines}, respectively).
+
+\subsection{Proximal Policy Optimization hyper-parameters}
+\label{sec:ppo_hyperparameters}
+To understand the role of the hyper-parameters studied in appendices \ref{sec:ppohyperparameterstarts} and \ref{appendix:appendixalternate} and summarized in section \ref{sec:shortsummary}, we first need to understand how PPO works. PPO \cite{schulman2017proximal} is based on policy improvement by pessimistic lower bound maximization. It is built on top of TRPO and relies on a clipping term and a learning rate, while TRPO relies on a complex second-order method to ensure policy improvement, as discussed in section \ref{sec:solvingrlproblem}. A pseudo code for the classical PPO training is detailed in algorithm \ref{alg:ppopseudocode}.
+
+A set of hyper-parameters is first defined and the environment (e.g., reward, state, and action spaces), as well as the learning parameters, are initialized (e.g., weights of a neural network). The algorithm runs as long as a termination criterion has not been reached (e.g., number of generations). PPO is executed in parallel with \code{ncores}. Before a parameter update, each agent (corresponding to each core) generates \code{n\_steps} trajectories by taking actions and observing states (lines 7 to 13 in algorithm \ref{alg:ppopseudocode}). The notation \code{NF} stems from Numframes and corresponds to the length of an episode, which will be explained in section \ref{sec:mdp}. Then the different inputs to the PPO surrogate objective must be evaluated. The cumulative reward $R(\tau)$ is evaluated (line 14) to calculate the value function loss, and the variance-reduced advantage-function estimators $\hat{A}$ is estimated for the clipped portion of the objective (line 15). Then the networks' parameters of the policy ($\theta$) are updated thanks to a Monte-Carlo estimate of the surrogate loss (lines 16 to 18). Then, a counter k is incremented and if a pre-defined condition is reached (e.g, k equal to 40,000 iterations) \code{done} is set to \code{True} and the algorithm terminates (lines 19 to 23). Then the last policy is returned (line 24). 
+
+\begin{algorithm}[H]
+  \small
+    \caption{Pseudocode for Proximal Policy Optimization (PPO)}
+    \label{alg:ppopseudocode}
+    \begin{algorithmic}[1]
+     \State \textbullet Set algorithm's hyper-parameters (\code{n\_steps},\code{ent\_coef},\code{VF\_coef},\code{noptepochs},$\epsilon$,$\gamma$,\code{LR},$\lambda$, \code{nminibatches},\code{max\_norm}, \code{condition})
+     \State \textbullet Initialize the environment (i.e., input variables, reward, action, and observation space)
+     \State \textbullet Initialize the neural network parameters
+     \State \textbullet Set \code{done} = \code{False}
+     \State \textbullet Set $k = 0$ 
+     \While{not \code{done}}
+             \For{Agent $j = 1$,..., \code{ncores}}
+                 \For{p = 1,..., \code{n\_steps}}
+                    \State \textbullet An action is sampled from the current policy $a_p \in \mathcal{A} \sim \pi_{\theta_k}$
+                    \State \textbullet Action $a_p$ is  evaluated by the environment and a reward $r_p$ is returned
+                    \State \textbullet A new state $s_p \in \mathcal{S}$ is observed and the state is set to $s_p$
+                \EndFor
+            \EndFor
+        \State \textbullet The cumulative reward $R_k$ is evaluated with $\tau$ equal to \code{ncores} $\times$ \code{NF} and $\gamma$
+        \State \textbullet The advantage function $\hat{A}_k$is estimated via GAE with $\lambda$ and $\gamma$
+        \State \textbullet The neural network parameters ($\theta_k$) are updated by stochastic gradient ascent (for \code{noptepochs} steps, with learning rate \code{LR}, maximum value for the gradient \code{max\_norm}, with \code{nminibatches} batches) such that:
+        \[
+    \theta_{k+1} \in arg\max_{\theta} \frac{1}{\text{\code{ncores}} \times \code{n\_steps}}\sum_{i = 1}^{\text{\code{ncores}}}\sum_{\tau = 0}^{\code{n\_steps} - 1}( \min(\frac{\pi_{\theta}(a_{\tau,i}|s_{\tau,i}))}{\pi_{\theta_{k}}(a_{\tau,i}|s_{\tau,i})}A^{\pi_{\theta_k}}(a_{\tau,i},s_{\tau,i}),g^{*}(\epsilon,A^{\pi_{\theta_k}}(a_{\tau,i},s_{\tau,i}))\] 
+    \[- \code{VF\_{coef}} (V^{\pi_{\theta}}(s_{\tau,i};\theta) - R_i(\tau))^2) + \text{\code{ent\_coef}} \times H(\theta) \]
+  \State \textbullet $k = k + 1$ 
+  \If{\code{condition}}
+  \State \textbullet Set \code{done} = \code{True}
+  \EndIf
+    \EndWhile
+    \State \textbullet  Return $\pi_{\theta_{N_{gen}}}$
+\end{algorithmic}
+\end{algorithm}
+where $g^{*}(\epsilon,A) = \{ \begin{array}{l}
+    (1 + \epsilon)A \quad \text{if} \quad A \ge 0\\
+    (1 - \epsilon)A \quad \text{if} \quad A < 0 
+  \end{array} $. 
+  
+
+The most influential hyper-parameters will be studied in appendix \ref{sec:ppohyperparameterstarts}. The first hyper-parameter is the shape of the reward. The reward drives the search towards an influential area of the search space. It is going to be studied in appendix \ref{sec:weights_study}. Another hyper-parameter is the length of the episode $\tau$ or \code{NF} in this work. Its role in the \textit{exploration/exploitation} trade-off will be unraveled in appendix \ref{sec:nf_study}. A higher value will render the learning more difficult as more loading design must be optimized, but it might allows the agents to explore more how the search space behaves. Another fundamental parameter is \code{n\_steps}, which corresponds to the number of actions each agent will perform before one optimization step. Thus the value obtained by multiplying \code{n\_steps} with the number of agents is the number of steps before $\theta$ is updated. It controls, therefore, the estimation of the gradient of the PPO loss. This parameter has a large influence on the quality of the best pattern found as it plays a major role in the \textit{exploration/exploitation} trade-off of RL by controlling the estimation of the gradient of the PPO's loss. The last hyper-parameter is \code{ent\_coef}. The latter plays a role in the \textit{exploration/exploitation} trade-off as it influences the contribution of the entropy term in equation \ref{eq:ppoloss}. A lower value will increase the exploitation, which will be studied in appendix \ref{sec:entcoef_study}.
+
+We have seen in this section the main motivation behind the development of PPO as well as the major hyper-parameters that characterize it. The question then becomes how can we apply it to solve our problem? The first step is to analyze how RL was applied to similar problems in the realm of CO, which is the topic of section \ref{sec:relatedwork}.
+
+\section{Related works and classical applications of RL to CO problems}
+\label{sec:relatedwork}
+
+Deep RL has been applied to solve optimization for more than two decades \cite{bertsekas1996neuro}. Nevertheless, the application to large-scale problems specifically large-scale CO \cite{mazyavkina2021reinforcement} is more recent, and we will focus on the latter literature for the review, as loading pattern optimization falls into this class. CO problems are by essence extraordinarily  hard to solve, in that they are NP-hard problems. For instance, solving the TSP with Exact methods requires dynamic programming. The global solution is obtained in $O(n^22^n)$ (called Held-Karp algorithm \cite{bertsimas2008introduction}), much lower than $n!$ obtained by enumerating all possible permutations. It is still very high, and preemptive from applicability for real-world large-scale problems. Deep learning and in particular deep RL are frameworks that do not work with analytical representation of an objective function but with objects (e.g., function approximator) that are constructed statistically with a large number of data and then mathematically optimized. The following characteristics are generally necessary to solve the CO problems:
+\begin{enumerate}
+    \item 
+    An objective function and a reward associated (e.g., sum of partial costs or differences between two solutions)
+    \item
+    A neural architecture (e.g., Feedforward, Graph, pointer networks...)
+    \item
+    A decision or MDP formulation (either a partial solution or a complete solution is available at each step)
+    \item
+    An algorithm used to solve the problem (e.g., A3C, DQN...)
+\end{enumerate}
+
+A large literature exists \cite{mazyavkina2021reinforcement,li2021deep}, in which authors are solving different canonical problems (e.g., Traveling Salesman (TSP) or Knapsack Problem (KP)). In \cite{khalil2017learning}, the authors are using a Graph embedding called structure2vec \cite{dai2016discriminative}, Deep Q-learning, and fitted Q-iteration to solve typical CO problems: (MVC, MAXCUT, and TSP). Expressing these problems as a Graph, they are learning which node (e.g., a city) is going to be selected for each new action (decision) and the reward is the sum of the partial tour formed at each step. In \cite{bello2016neural}, they are leveraging a policy gradient with critic to train a recurrent policy network (in particular a pointer network \cite{vinyals2015pointer}) that predicts the optimal tour in the TSP with the reward being the negative total tour length  and the item distribution for the Knapsack. Similarly, in \cite{nazari2018deep}, they are solving the TSP vehicle routing by policy gradient (REINFORCE \cite{williams1992simple} and A3C \cite{mnih2016asynchronous} for the stochastic version of VRP), with a simplified version of the pointer network. A mixture of Monte-Carlo tree search and deep RL is proposed in \cite{xing2020solve} to solve the TSP, where the graph defined by the cities is represented by the tree, which policy is updated depending on a value function trained by RL. There, the reward is equal to $r(s_{t+1}) = c(s_t) - c(s_{t+1})$, the difference between the previous solution and the new one.  Based on the same idea, \cite{emami2018learning} utilized policy gradient for solving problems involving permutation but does not yet generalize well, while \cite{kool2018attention} is utilizing it with graph embedding instead of a pointer network to learn good heuristics for the TSP and VRP on different instance sizes. In these works, the weights are trained to generate solution end-to-end of unseen instances of problems at inference rather than restarting the training every time a new instance is studied \cite{mazyavkina2021reinforcement}. However, the end-to-end inference strategy in \cite{li2021deep} is not implementable when the objective function is time-consuming to evaluate \cite{solozabal2020constrained}, which is the case for the problem at hand \cite{seurin2022pwr}.
+
+Another different approach includes \cite{delarue2020reinforcement}, which combined value-based iteration with Mixed-Integer-Programming, which exploits the combinatorial structure of the problem at hand, to define a deterministic policy that is evaluated by solving the optimal Bellman equation applied to the Capacitated Vehicle Routing Problem (CVRP). They compete with state-of-the-art RL approaches but are only solving one problem at a time, which contrasts to the previous works cited where multiple instances are solved at once \cite{mazyavkina2021reinforcement}. Their idea is also limited to the existence of a functional form of the problem, which cannot be of use in this work \cite{seurin2022pwr}.
+
+However, the closest application of deep RL to core optimization can be found in \cite{radaideh2021physics} where the authors made the parallel between optimizing a nuclear fuel assembly and the classical application of RL to games, in which fuel designer tactics are implemented as rules of a game RL agents are trying to solve. With the help of expert rules, the authors found that RL outperforms classical heuristics methods such as GA and SA when the problem becomes large and challenging, which is the case for core optimization as well. In \cite{radaideh2021large}, the authors coupled RL and Evolutionary Strategy (ES) to solve the multi-zone BWR bundle optimization. RL was pivotal for narrowing down the search space in high-quality regions to inform ES with \textit{candidate} solutions, where ES then diversified the search, improving the number of feasible candidate designs from 14 (RL standalone) to 82. In these works, however, no study of the significance of the RL hyper-parameters was conducted and it is unclear why RL behaves better than SO-based approaches. They would therefore benefit greatly from an understanding of the behavior of the latter to be able to apply RL optimally for large-scale constrained engineering problems.
+
+Following up on these promising works, we derived a framework in which agents are trained to build a LP for PWR optimization. The agents will sequentially construct different LPs by choosing the arrangement of FAs in the core, as well as their compositions. The reward will be based on an objective function that the core designer aims to maximize: the objective function will contain the LCOE and key safety and operational constraints. This approach differs from heuristic-based methods, in which actions would be taken randomly, while here the actions depend on the understanding of the objective space from the agents. Such added physical insights will likely lead to better solutions.
+
+The next section \ref{sec:rlalgorithmicassessement} will derive an RL-compliant formulation of the loading pattern optimization problem, define proper action and state spaces, present the experimental setup or the core design studied, as well as the reward for the problem at hand,.
+\section{RL algorithmic's assessment on the core optimization problem}
+\label{sec:rlalgorithmicassessement}
+\subsection{Markov Decision Process (MDP) for the core loading pattern optimization}
+\label{sec:mdp}
+The loading pattern optimization problem can be solved by casting the problem with an appropriate formulation. One such formulation is the Markov Decision Process (MDP). A (discounted) MDP is a tuple $\mathcal{M} = (\mathcal{A},\mathcal{S},\gamma,p,r)$, where $\mathcal{A}$ is the action space, $\mathcal{S}$ is the state space, $\gamma$ is a discount factor, $p$ is a transition probability with Markov Property:  $p(s_{t+1}|s,a) = p(s_{t+1} |s = s_t,a = a_t)$ (each state depends only on the previous state). An MDP generates a history $\mathcal{H} = (s_0,a_0,...,s_{\tau},a_{\tau})$, where $\tau$ is the episode length. A policy $\pi = (d_1,...)$ is a sequence of decision rules $d_i : \mathcal{S} -> \mathcal{A}$. Solving the MDP corresponds to finding a policy $\pi^{\star}$ that solves $\max_{\pi} V^{\pi}(s_0)$ as described in section \ref{sec:solvingrlproblem}. In the literature for solving canonical CO problems such as the Traveling Salesman Problem (TSP), the Maximum Cut Problem (Max-Cut), the Bin Packing Problem (BPP), the Minimum Vertex Cover (MVC), or even the Maximum Independent Set (MIS), the recipe for casting the problem in an MDP are similar \cite{mazyavkina2021reinforcement}. The state space $\mathcal{S}$ represents a full or partial solution, an action $a$ adds a node to the partial solution or perturbs a sub-optimal one, the reward is directly related to the cost function characterizing each problem (e.g., the cost of a partial tour or the difference between two tours in case of the TSP), and the horizon is the number of nodes to construct a solution or arbitrary stopping criteria if complete solutions are perturbed at each step. The mapping between state and action is enabled by the use of an encoder such as a recurrent neural network (RNN), a Graph Neural Network (GNN), or a Multi-Layer Perceptron (MLP), with sometimes the help of attention mechanisms. See section \ref{sec:relatedwork} for practical examples.
+
+For our purposes, an action is constructing one LP. The action space, therefore, depends on the number of FAs available, and the complexity of the problem (i.e., decision variables including shuffling, rotation, and pure assignment). The state space is the space represented by all possible LPs achievable from our choice of fresh fuels and existing burned assemblies. A state must correspond to a unique core \cite{erdogan2003apwr}. Consequently, the state of a core will be augmented by a feature embedding of the physics characteristic of each core generated (e.g., $F_{\Delta H}$, BP, and enrichment of each fuel assembly...): $s \in \mathcal{S} = \{s^{i} : i = 1,2,...,N_{FA}\}$, where $s^{i} = \{s^i_1,...,s^i_d\}$, where d is the embedding size of the fuel assembly $s^i$  as will be described in section \ref{sec:description_core}. The mapping between the state and the action is enabled by one-layer feature extractor and two hidden layers with 64 hidden units each fully connected, which is the default fully-connected neural network in stable-baselines.
+
+The $\gamma$ is fixed at 0.99 in this study. The transition probability is either deterministic or stochastic. In the deterministic case, a choice of FAs will always yield the same pattern. For the stochastic case, a choice of action can be complemented by random assignments if the action is prohibited (e.g., a fuel assembly has already been picked). The reward is given by the computation of the objective function derived in section \ref{sec:objandconstr}, which is a testament to the quality of the LP. The episode terminates when a certain number of LPs Numframes (\code{NF}) has been generated. 
+
+\subsection{Description of the Problem within the RL framework}
+\label{sec:description}
+In this section, the nuclear reactor core studied to apply the method, the objective, and the constraints involved will be described.
+\subsubsection{Description of the reactor core, action, and state space}
+\label{sec:description_core}
+To demonstrate the performance of the RL algorithms, a loading pattern optimization study is performed for the equilibrium cycle of a 4-loop Westinghouse-type reactor with 193 assemblies, 89 of which are fresh. This means that 89 will remain in the reactor (but potentially at a different positions) for the next operational cycle after refueling, while 16 will remain for three cycles in total. The schematic is shown in Figure \ref{fig:pwrcore}. The equilibrium cycle is obtained by applying the same LP recursively until there is the convergence of the physics parameters. Therefore, we know exactly how much energy is extracted from each FA (also called exposure or burnup) and how much they cost, which is why we can express the LCOE in \$/MWh \cite{kropaczek2011copernicus}. To reduce the search space, mirror one-eighth symmetry boundary conditions are applied. This symmetry is widely utilized for scoping analysis in literature (as in \cite{lima2008anuclear,wu2016quantum,lin2014themaxmin,erdogan2003apwr,ortiz2004using,yamamoto2003application}). 
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale = 0.5]{westinghouse_eighth.png}
+    \caption{PWR core arrangement and symmetries. Elements within the eighth symmetry (dark gray) are permuted together, while elements on the symmetry lines (light gray) are permuted together. The center element is chosen to have the lowest enrichment and highest BP concentration.}
+    \label{fig:pwrcore}
+\end{figure}
+If the agents never receive high-quality rewards or if it remains flat, they will never learn. To help them receive good rewards more rapidly, certain rules to the loading pattern optimization were applied. Throughout the literature, there are important rules/heuristics enforced. Twice-burned FAs or assemblies with the highest exposure are placed at the core periphery systematically \cite{kerkar2007exploitation,delcampo2004development,castillo2004bwr} which reduces the load on the reactor vessel (called a low leakage pattern) for increasing its lifetime \cite{kerkar2007exploitation,lin2014themaxmin}, and improves the cycle length (equal to the theoretical length of an operational cycle) \cite{wu2016quantum,lin2014themaxmin}, lowering the fuel cycle cost \cite{kropaczek2011copernicus}. It also can lower the BOC excess of reactivity, hence the Moderator Temperature Coefficient (MTC) \cite{wu2016quantum} at the same time. It is however a trade-off with the peaking factor flattening, which will be harder to accomplish. The MTC and peaking factors (e.g., $F_{\Delta h}$) must remain below a threshold to ensure the theoretical safety of the reactor. Some optimization techniques are even solely utilizing heuristics to create a LP \cite{nissan1997upgrading}. Imposing heuristics can have its limitation and for this work, few of them will be enforced, while most will be learned by the RL agents. One typical rule includes putting twice-burned fuel at the periphery and preventing fresh ones from being located there. To even out the power, a ring of fresh FAs between the in-board and the periphery is placed. On top of that, to limit the risk of fuel failure during Reactivity Initiated Accident (RIA), no square of fresh FAs are allowed in the core, which is a typical rule often enforced by the Nuclear Regulatory Commission (NRC). Because the FAs are not homogeneously burned, they are sometimes rotated for the next cycle. However, since the impact of assembly rotations is relatively small \cite{lin2014themaxmin}, it is not included in the current study. Similarly, the compositions of the twice-burned FAs (but not locations) are fixed. The original number of possible patterns in eighth symmetry was $\sim 10^{52}$.  Such rules, based on core design best practices, reduce the number of possibilities to $\sim 10^{29}$.
+
+Each action represents a choice of a template pattern and all the FAs that are going to be placed inside it. The action space for the fresh fuels is constant and depends on the available fresh fuels provided by the user. Here, the fresh FAs (14 choices for eighth symmetry) are chosen from 24 different types that are characterized by their enrichment and BP distribution. In this work IFBA and WABA are utilized as BP. The uranium 235 enrichment varies between 4.00 to 4.95\%, the IFBA and WABA loading are discrete between 128x or 156x, and 12 or 24 guide tubes, respectively. WABAs are placed in water rods in which control mechanisms could be inserted in case of an emergency shutdown of the reactor. Therefore, locations under Control Rods (CRD) cannot hold WABA to not obstruct their insertions. Therefore a randomly sampled fresh fuel without WABA is selected if the FA chosen by the agent for this specific location is forbidden. It could be possible to learn to not take forbidden actions via learning rules as in a game prior to running SIMULATE3 as done in \cite{radaideh2021rule} with CASMO4e. Nevertheless, we found out that it did not penalize the learning to simply replace forbidden by randomly sampling valid ones. The action space must then decrease when choosing once- and twice-burned FAs. To improve the search efficiency we need to prevent random actions to be taken \cite{nijimbere2021tabu}. For this purpose, we adopted the \code{MultiDiscrete} option of stable-baselines to define the action space. There, for each once- and twice- burned location, the action space decreases by 1 for each new action, which prevent forbidden action to be taken.
+
+The new action obtained by accounting for the forbidden actions must then be decoded before being evaluated. The decoding is straightforward. Each entry is a location in the 2D core as shown in figure \ref{fig:2dto1d}.
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale = 0.9]{2d_to_3d.png}
+    \caption{Example of transformation of a 2D core to a 1D array. The FAs in the eighth symmetry appear first in the array, while the element in the quarter symmetry lines appear second starting from the diagonal, due to the particular treatment needed for these locations. The center assembly is blurred as it does not belong to the action space.}
+    \label{fig:2dto1d}
+\end{figure}
+
+Each entry of the action's vector is an integer, which corresponds to a fuel assembly. The input is spanned sequentially, while the core locations are treated depending on their types and locations as provided in figure \ref{fig:2dto1d}. First fresh fuel locations are filled and then once- and twice-burned locations are treated. For fresh fuel, once-, and twice-burned location j, integer $k^j$ corresponds to the kth element of the list of possible fresh fuel, available once-, and twice-burned FAs, respectively. The list of possible fresh fuel is constant, while the list of available burned assemblies decreases.
+
+Then the state must also be defined. Initially, no pattern were generated and the starting state is an array of zeros. As the algorithm progresses, the starting state at the beginning of each \textit{episode} will be the embedding of the best pattern ever found. The reason is to mimic the way a core designer would iterate on the best pattern found as it progresses toward finding a loading pattern by hand. The parameters chosen for embedding are the relative position of the FAs, their enrichment, their BP's content (IFBA or WABA), the Radial Power Fraction (RPF), the $F_{\Delta h}$, and the pin peak exposure at the End Of Cycle (EOC) for each individual fuel assembly. For an equilibrium cycle, the first 4 fully defined a fuel pattern and the last 3 were added to help the agent. However, no thorough analysis of the influence of embedding has been conducted. The core is then evaluated following the objective function defined in section \ref{sec:objandconstr}.
+
+\subsubsection{Reward construction with the Objectives and Constraints}
+\label{sec:objandconstr}
+The classical formulation of an optimization problem can be proposed as follows without loss of generality:
+\begin{align*}
+    &\min_{x} f(x) = [f_1(x),f_2(x),....,f_F(x)]^T \\
+    &\text{s.t.} \quad g_i(x) \le 0 \quad \forall i\in \{1,...,N\} \\
+     & h_j(x) = 0 \quad \forall j\in \{1,...,M\}\\
+     & x = [x_1,x_2,...,x_K]^T \in \mathcal{S} \subset \mathbb{R}^K
+\end{align*}
+\label{eq:fObj}
+\noindent
+Here, a single objective optimization problem will be solved, hence $F$ is equal to 1. The first portion of the objective function is the LCOE. The LCOE is computed following the proposed methodology in \cite{saccheri2004atight}, which results from the sum of the costs over different levelized periods or fuel cycles. The levelized period is characterized by the effective-full-power-days (EFPD) or cycle length under which the reactor operates before the temporary shutdown for refueling. The intrinsic characteristics of the fuel assembly loaded after the aforementioned period such as its average fuel enrichment and WABA content are needed to compute the cost for each stage of the fuel cycle: uranium extraction, transport, conversion, enrichment, fabrication, and waste disposal. Another factor is the amount of energy extracted during the lifetime of a fuel assembly or burnup expressed in GWd/tHm. The formula is given in equation \ref{eq:lcoedef}:
+\begin{equation}
+    LCOE = \frac{EFPY(T_{lev})}{\eta \times K_f(T_{lev}) \times 24} \times \frac{r}{1 - \exp^{-rT_{lev}}} \sum_{i = 1}^{N_{FA}}\alpha_i\frac{1}{Bu_i}\sum_{i_k}C_{ik}
+    \label{eq:lcoedef}
+\end{equation}
+where $K_f(T_{lev}) = K_{av} \times (1 - \frac{T_{FO} + T_{MO}}{T_{lev}})$ is the capacity factor that depends on the fuel lifetime $T_{lev}$ = $\frac{T_{cy}\times n_{batchs}}{365.25}$ (where $T_{cy}$ is the cycle length and $n_{batchs} = 3$ is the number of batches in the core), $K_{av}$ the availability factor, $T_{FO}$ the refueling outage, and $T_{MO}$ the maintenance outage. $EFPY(T_{lev}) = K_f \times T_{lev}$ is the effective full power year,   $\alpha_i$ is the proportion of assembly of type i in the core, and $\sum_{i_k}$ is the sum over the (levelized) component of the cost $C_{ik}$ over the lifetime of the fuel assembly (including the cost of WABA). $C_{ik} = c_{ik} \times \exp^{- r T_{ik}}$, where $c_{ik}$ is the kth overnight cost in $\$/kgU$ of a fuel assembly, r is the discount rate, and $T_{ik}$ the corresponding levelized period. The latter is negative if the stage started before the beginning of the cycle (e.g., fabrication). The cost of WABA is accounted considering that one unit cost 1500 \$, hence the average contribution of each fuel assembly in $\$/kgU$ is $C_{i,waba} = Wab \times 1500 \times \exp^{- r T_{fabric}}\frac{1}{Mass}$, where $Wab$ is the total number of WABA units and $Mass$ is the mass of the core.  Lastly, $Bu_i$ is the burnup of fuel assembly i. 
+
+Nevertheless, the regulatory and operational constraints must also be satisfied but ensuring feasibility is already a hard problem. This study considers the following set of 7 essential constraints for operation and safety. A description of their derivation and significance with regards to safety can be found in the website of the United States Nuclear Regulatory Commission (NRC) (e.g., for peaking factors \cite{nrcXXXX0523}): 
+\begin{enumerate}
+    \item
+	$c_1$: Ensuring a lower limit for the cycle length to respect the refueling outage schedule, where $c_1 \geq 500$ EFPD is chosen as a constraint.
+	\item
+	$c_2$: An upper limit on the peak pin peaking factor $F_q$, which is a safety parameter measuring the ratio between the maximum local power produced to the average power generated by the fuel rods in the core. It is monitored to limit the fuel centerline temperature and Pellet-Cladding concerns. The constraint is $c_2 \leq 1.85$.
+	\item
+	$c_3$: An upper limit of the rod-integrated power $F_{\Delta h}$, which is a safety parameter measuring the maximum total power generated by a fuel rod. It is monitored in particular to respect the margin to departure from nucleate boiling ratio. The constraint is $c_3 \leq 1.45$.
+	\item
+	$c_4$: To help
+maintain the core critical, diluted Boron in the coolant is used in PWRs but it must be limited due to safety reasons. In particular, we consider an upper limit of the boron concentration $C_b$ to control the axial offset due to boron deposition and prevent positive temperature coefficient of reactivity. The constraint is set to $c_4 \leq 1200$ ppm.
+	\item
+	$c_5$: An upper limit of the pin peak discharge burnup $Bu_{max}$ for fuel performance concerns (e.g., hydrogen buildup). The constraint is $c_5 \leq 62$ GWd/tHm (\textbf{G}iga \textbf{W}att \textbf{d}ay per \textbf{t}on of \textbf{H}eavy \textbf{M}etal).
+	\item
+	$c_6$ and $c_7$: Limits of the number of different enrichment ($c_6$) and BP ($c_7$) patterns in fresh fuel loading batches, respectively. The constraints are $2 \le c_6 \le 3$, $1 \le c_7  \le 3$. The upper bounds correspond to potential constraints imposed by the fuel vendors. The lower bounds are assumed based on expert judgment to enable effective reduction of power peaking in the core.
+\end{enumerate}
+ 
+ These constraints are called \textit{instantaneous} \cite{liu2021policy} because they must be satisfied after one action. They are also dubbed \textit{implicit} \cite{liu2021policy} because they are obtained with a 3D nodal nuclear depletion simulation code SIMULATE3 \cite{rempe1989simulate}.
+%These FOMs are obtained by using a 3D nodal nuclear depletion simulation code SIMULATE3 \cite{rempe1989simulate}.
+In literature,  three main categories of objective function are utilized namely penalty function-, step-wise or piece-wise-, and ratio-based methods \cite{li2022areview}. Here a penalty-based method was found to work better. The LCOE and the constraints are included in the objective function that needs to be maximized:
+\begin{equation}
+    \max_{x} f(x) = - LCOE (x) - \sum_{i \in C} \gamma_i \Phi(x_i) + 1 \times \delta_{\forall i, x_i \le c_i}
+    \label{eq:NucCoreObj}
+\end{equation}
+where $C = \{ (c_{i})_{i \in \{1,..,7\}} \}$ is the set of constraints and $(\gamma_{i})_{i \in \{1,..,7\}}$ is a set of weights attributed to each constraint. If $ (x_{i})_{i \in \{1,..,7\}}$ are the values reached for the core ($x$) for the corresponding constraints $(c_{i})_{i \in \{1,..,7\}}$, $\Phi(x_i) = \delta_{x_i \le c_i} (\frac{x_i - c_i}{c_i})^2$, where $\delta$ is the Kronecker delta function. This formulation was deemed appropriate, as it is a single objective constraint problem, and the penalization disappears when the constraints are satisfied. 
+
+The equality constraints are also \textit{instantaneous} but called \textit{explicit} \cite{liu2021policy} because they can be dealt with maskable actions, random replacement, or by the construction of the MDP. We write them in terms of the number of FAs and their locations in the core following the methodology of \cite{kropaczek1991incore}. Let's define $\chi_{L,T,B,E}$ such that:
+\[\chi_{L,T,\mathcal{B},\mathcal{E}} = \{\begin{array}{l}
+     1 \quad \text{if a fuel assembly located at position L is of burned-type T, with BP } \mathcal{B}  \\
+      \quad \text{   and enrichment } \mathcal{E}  \\
+     \\
+    0 \quad  \text{otherwise} 
+\end{array}\]
+where $T$, $B$, $E$ are the set of possible burned-type (i.e., fresh, once, or twice), BP, and enrichment, respectively. One and only one assembly must be placed at each location:
+\begin{equation}
+\forall l \in \{1,...,N_{FA}\}, \quad \sum_{\tau = 1}^3 \sum_{b \in \mathcal{B}} \sum_{e \in \mathcal{E}} \chi_{l,\tau,b,e} = 1
+\end{equation}
+Then, fresh fuels cannot be placed at the periphery, which can be written in terms of:
+\begin{equation}\forall Fresh, \quad \sum_{l} \sum_{b \in \mathcal{B}} \sum_{e 
+\in \mathcal{E}} \chi_{l,Fresh,b,e} = 0 \quad l \quad \text{is a periphery}\end{equation}
+Additionally, BPs cannot be placed underneath control rods:
+\begin{equation}\forall \beta \in B \setminus 1_W \quad \sum_{l} \sum_{\tau = 1}^3 \sum_{e 
+\in \mathcal{E}} \chi_{L,T,\beta,e} = 0 \quad l \quad \text{is under a CRD}\end{equation}
+where $B \setminus 1_W$ are the FAs with any BP and WABA. There is exactly the same number of fresh and once-burned, one fresh in the center, and four twice-burned per quadrant:
+\begin{equation}\sum_{l = 1}^{N_{FA} - 1}  \sum_{b \in \mathcal{B}} \sum_{e 
+\in \mathcal{E}} \chi_{l,Fresh,b,e} = \sum_{l = 1}^{N_{FA}}  \sum_{b \in \mathcal{B}} \sum_{e 
+\in \mathcal{E}} \chi_{l,Once,b,e} = 88\end{equation}
+\begin{equation}\sum_{l = 1}^{N_{FA}} \sum_{b \in \mathcal{B}} \sum_{e 
+\in \mathcal{E}} \chi_{l,Twice,b,e} = 16\end{equation}
+As discussed in section \ref{sec:description_core}, these constraints are solved by construction.
+
+The RL-compliant formulation of the core optimization via an MDP has been defined in section \ref{sec:mdp}, the input variables were defined in section \ref{sec:description_core}, and objectives and constraints were defined in section \ref{sec:objandconstr}. It is now possible to solve the problem. 
+
+\section{Results and Discussion}
+\label{sec:results}
+
+In section  \ref{sec:prerequisite} we provide the metrics and statistical tools required to conduct the study. In section \ref{sec:shortsummary} we summarized the results of the studies conducted in appendices \ref{sec:ppohyperparameterstarts} and \ref{appendix:appendixalternate}. Lastly,  in section \ref{sec:applicationtobenchmark}, we apply the method derived to benchmark functions and demonstrate the viability of the method beyond our loading pattern problem.
+
+ \subsection{Pre-requisites for hyper-parameter tuning}
+ \label{sec:prerequisite}
+ As mentioned in section \ref{sec:solvingrlproblem} two major parameters coming from PPO derivation include the learning rate \code{LR} and \code{Clip} (the $\epsilon$ in algorithm \ref{alg:ppopseudocode}). Surprisingly, they were found to not influence the optimization's result drastically. \code{noptepochs}, and the depth of the neural architecture were also studied but had very little effect or deleterious effect when getting away from the default values. Therefore only \code{weights}, \code{Numframes}, \code{n\_steps}, and \code{ent\_coef} results will be thoroughly presented in appendix \ref{sec:ppohyperparameterstarts}. The results for the other hyper-parameters are given in appendix \ref{appendix:appendixalternate} but both are summarized in section \ref{sec:shortsummary}. 
+
+To compare the performance of the hyper-parameters of the newly developed MDP two metrics are necessary: (1) the mean objective per episode, which measure how the RL agents are learning, and (2) the max objective obtained for a candidate, which is the goal of the core designer. Another interesting measure is given in \cite{francois2012comparison} the "Optimization Technique Performance (OTP)": as 
+\begin{equation}
+OTP = \frac{fitness}{\text{number of calls}}
+\label{eq:otp}
+\end{equation}
+which is equivalent to the classical \textit{sample efficiency} (SE) in the RL framework. Nonetheless, in this work, the performance is not only measured in the classical RL sense (i.e., for a system to be able to reproduce a high cumulative reward after training) but also needs to account for the best pattern found. Three equivalent SE measures will therefore be given: One is the Improvement Ratio (IR). The IR is defined as the ratio between the number of samples needed to reach the maximum objective and the total number of samples for the run. A low IR signifies that the agents fail to keep improving the pattern while a high one means that they keep bettering. The other one will be the average mean reward obtained per episode in the latest generation (assuming all experiments generated a similar number of samples, this is equivalent to the SE in the RL sense). A high mean objective SE means that the agents are performing well. Moreover, since the experiments are run over a day and not until convergence, they will be sometimes combined with the $\sigma$SE, which is the standard deviation of the mean reward obtained per episode in the last generation. If the latter is low it means that the agents are close to convergence. We are aiming at seeing both high mean objective SE and $\sigma$SE.  To sum up, assessing the performance of hyper-parameters is a multi-measure problem. It needs:
+\begin{enumerate}
+    \item 
+    A high Max objective function ever found that complies with the designer's interest.
+    \item
+    A high mean objective SE (at the time the algorithm stops) over multiple generations and a high $\sigma$SE (potential for future improvement) which comply with the RL interest.
+    \item
+    A high improvement ratio, which means that the algorithm has recently improved and is not behaving sub-optimally.
+\end{enumerate}
+
+Additionally, the policy is by essence stochastic hence comparing the results over one single optimization run is theoretically not sufficient. Commonly, a better approach would be based on running N times each algorithm on the same problem (e.g., N equal to 10 in \cite{ivanov2021assessment}, 15 in \cite{meneses2009particle}, 50 in \cite{meneses2015acrossentropy}, or 30 in \cite{francois2012comparison}) and evaluate the best, mean, and standard deviation of the objective over all experiments for each type of algorithms and draw conclusions from it. However, this does not provide the level of certainty at which these conclusions are valid (e.g., how high N should be). The latter issues can be addressed via non-parametric statistical tests, which is a class of popular methods adopted for instance in the world of swarm and evolutionary computations \cite{derrac2011apractical,schlunz2016acomparative}. 
+ 
+ Hypothesis Testing (HT) \cite{casella2002statistical,derrac2011apractical} is a classical inference tool that lies at the basis of the parametric and non-parametric tests. In HT, two hypotheses $\mathcal{H}_0$, the null hypothesis, and $\mathcal{H}_1$, the alternative hypothesis are a partition of the hypothesis space. The goal for the experimenter is to decide whether to accept or reject $\mathcal{H}_0$ after observing a sample based on a \textit{hypothesis test}, which defined the sample region for which the null hypothesis is accepted or rejected. For our purpose, the $\mathcal{H}_0$ could be that the two algorithms are equivalent in performance for pairwise comparison \cite{derrac2011apractical}, and rejecting $\mathcal{H}_0$ would signify that for a particular or a set of problems, one algorithm outperforms the other. Furthermore, in the case of multiple algorithms, the error from drawing a false conclusion from multiple pairwise comparisons may accumulate. The Friedman Test (FT) \cite{derrac2011apractical} is the non-parametric version of the repeated measures ANOVA \cite{casella2002statistical,derrac2011apractical} test, which is used to compare a set of assumptions at the same time. The inputs to the tests for each instance of hyper-parameters will be the value of the max objective and max mean objective per episode for each experiment. This test however only confirms that at least two instances come from different distribution but do not provide conclusion on pairwise tests. Once an FT is successful, post-hoc tests can be performed \cite{derrac2011apractical} to draw the a conclusion between each assumption (e.g., which set of hyper-parameters are the best). Even though it has limited power \cite{derrac2011apractical}, we will use here the Nemenyi Test (NT) due to its simplicity and that it has been applied in a work related to loading pattern optimization in \cite{schlunz2016acomparative}. At most 10 experiments for each variation of the parameters are run (with the same seed for each variation of the parameters studied and 10 seeds in total). The p values will also be provided, which provide quantitative information on how certain are we to reject one or the other hypothesis compared to a level of significance $\alpha$. Roughly, the p-value is the probability of observing an instance at least as extreme as your results if the null hypothesis $\mathcal{H}_0$ was true. The smaller it is, the more likely we are to reject $\mathcal{H}_0$. For a mathematical definition see \cite{casella2002statistical}. The tests are implemented through the scipy.stats \cite{2020SciPy-NMeth} and scikit posthocs \cite{Terpilowski2019} packages for Friedman and Nemenyi, respectively, with $\alpha$ equal to 0.05 as suggested in \cite{schlunz2016acomparative}. 
+
+A previous in-house study led to the initial PPO hyper-parameters: \code{nminibatches} is 4, \code{LR} is 0.00025, \code{max\_grad\_norm} is 0.5, $\epsilon$ is 0.2, \code{n\_steps} is 4, \code{vf\_coef} is 1.0, and \code{noptepochs} is set to 10. These were obtained by changing the hyper-parameters by hand until we had a significant number of feasible patterns within 24 hours of run. Then, all the weights in equation \ref{eq:NucCoreObj} were set to 25,000 except for constraints $c_6,c_7$, for which 1,000 is used. The vectorized state is passed through a feature extractor (one flattened layer) and the extracted features input a feed-forward two-layer perceptron neural network policy with 64 hidden weights per layer.  The time to reach a feasible solution is also of importance. For instance, emergency core re-designs can be limited to 1-3 days because about a million dollars per day is assumed to be lost during the shutdown of the NPP. Therefore, it is important to tune the hyper-parameters to 
+ achieve a similar level of speed. As a result, we decided to limit the computing time allocated to our optimizations. For all experiments, PPO agents ran from scratch for 24 hours, which amounted to about 40,000-50,000 SIMULATE3 calls or objective function evaluation on the Massachusetts Green Energy High-Performance Computing Center, when using one node of 2x16  cores (i.e., 32 agents) Intel Xeon 2.1 GHz with 128 GB RAM. Section \ref{sec:shortsummary} summarizes our findings.
+
+\subsection{Summary of the studies conducted}
+\label{sec:shortsummary}
+In this section, we present a summary of the findings made in this work (from appendices \ref{sec:ppohyperparameterstarts} and \ref{appendix:appendixalternate}). 
+
+We first studied the shape of the objective function via the \code{weights} in appendix \ref{sec:weights_study}.  This parameter behaves as a fudge factor which could result in an improvement on the economic side but also the stability of the learning. Then, we studied the parameter \code{NF} in appendix \ref{sec:nf_study}. This parameter plays a role in the exploration/exploitation trade-off. A higher value will yield a lower mean objective. Due to the significance of the statistical tests, we suggest however, to always choose a value of 1, with the restarted state being the best ever found. This formulation can be thought of as a gradient ascent problem: At each episode, based on the understanding of the curvature of the objective space, the agents are trying to find the steepest ascent direction. We also studied \code{n\_steps}, which is a hyper-parameter that controls the exploration/exploitation by playing with the bias/variance trade-offs in the estimation of the gradient of the PPO loss. A very low value may result in instability of the agents and being stuck in local optima as few samples are exploited to evaluate the gradient. A higher value may result in slow learning and a poorer quality of the best pattern found because more samples will be needed before optimization of the policy network's parameters. Lastly, we studied \code{ent\_coef}, which controls the randomness of the policy during training. It also controls the exploration/exploitation trade-off. Lower values yield faster convergence but are prone to local optima. On the other hand, a high value will result in slower convergence. A sweet spot between the speed of convergence, the quality of the pattern found, and the stability of the learning of the agent resulted in our choices of hyper-parameters and are summarized in table \ref{tab:summaryofhyper}. 
+
+The reader should note that the value of the hyper-parameter \code{n\_steps} which was found to be optimal is excessively different from the default value in stable-baselines (4 against 128). This also underlines the need to perform a thorough evaluation of the hyper-parameters' performance.
+\begin{table}[H]
+    \centering
+        \caption{Summary of the hyper-parameters studied, the corresponding ranges, the default and final chosen value for each, and appendices in which these studies can be found.}
+    \begin{tabular}{c|c|c|c|c}
+    \hline
+    Hyper-parameters & Range Studied & Default in stable-baselines & Best chosen & Corresponding appendix \\
+    \hline
+     \code{weights}    &  [1,000 - 100,000] & -$^{\star}$ & 25,000 & \ref{sec:weights_study}\\
+     \code{NF}    &  [1-100] & -$^{\star}$ & 1 & \ref{sec:nf_study}\\
+     \code{n\_steps} & [1-75] & 128 & 4 & \ref{sec:nsteps_study}\\
+     \code{ent\_coef} & [0 - 0.01] & 0.01 & 0.001 & \ref{sec:entcoef_study}\\
+     \hline
+    \end{tabular}
+    \label{tab:summaryofhyper}
+    \begin{tablenotes}
+      \item  \footnotesize$^{\star}$These two hyper-parameters (\code{weights} and \code{NF}) are specific to the core design optimization and not stable-baselines, hence there are no default values for them.
+    \end{tablenotes}
+\end{table}
+We also recall the conclusions of the studies in appendix \ref{appendix:appendixalternate}:
+\begin{enumerate}
+    \item 
+    The default value of \code{LR} equal to 0.00025 demonstrated the optimum trade-off between fast learning with a premature convergence for higher values of \code{LR} but no learning at all for lower values. See appendix \ref{appendix:learningra} for more details.
+    \item
+    The clipping parameter $\epsilon$ can be very sensitive as a change from 0.02 to 0.01 substantially worsened the performance of the agents as showcased in table \ref{tab:clipping_study}. The default value of 0.02 corresponds to a sweet spot between higher exploration but slow convergence for higher values but slow and unstable learning for lower values. See appendix \ref{appendix:clipstudy} for more details.
+    \item
+    For the hyper-parameter \code{max\_grad\_norm} the differences are not as visible as for \code{LR} or $\epsilon$. Other values than the default 0.5 could be competitive such as 1.0, 1.2, and 1.5. However, when coupled with the final \code{ent\_coef}, 0.5 demonstrated better SE measures than all of them. See appendix \ref{appendix:maxgradnormstudy} for more details.
+    \item
+    A value of 10 for \code{noptepochs} was kept. Higher values yielded a higher entropy of the policy network and therefore more random actions were taken. A lower value of 5 exacerbated similar performance in terms of the best pattern found and $\sigma$SE but a lower mean objective SE, while a value of 1 prevented the agents to ever learn anything. See appendix \ref{appendix:noptepochsstudy} for more details.
+    \item
+    The hyper-parameter \code{nminibatches} can be sensitive and low values (below 4) are preferred. In spite of observing a smooth learning, higher values yielded very low mean objective SE with very high $\sigma$SE. The default value of 4 exacerbated better SE measures compared to 2. See appendix \ref{appendix:nminibatchesstudy} for more details.
+    \item
+    Reducing the impact of the value function via reducing \code{VF\_coef} seemed to increase the exploitation. Lower value often resulted in lower $\sigma$SE and higher mean objective SE and the trade-off sits between 1.0 and 0.8. The study also revealed that improving the value function loss had more impact on the SE measures than improving the policy one. See appendix \ref{appendix:vfcoefstudy} for more details.
+    \item
+     Halving the breadth (i.e., the number of hidden nodes per layer) of the policy network systematically decreased the mean objective SE and increased the $\sigma$SE, while the best pattern found is very similar. On top of that, more layers (i.e., increasing the depth) resulted in slower learning but a better average behavior. The default value of 2 was kept thanks to a higher mean objective SE and $\sigma$SE. See appendix \ref{appendix:architecturestudy} for more details.
+\end{enumerate}
+Overall, we argue that the most sample efficient way to apply RL is as follows: Due to the significance of the statistical tests for \code{NF}, a value of 1 should always be considered, where a pattern is replaced by a problem-dependent input. Then, for a given amount of sample, the hyper-parameter \code{n\_steps} must be decreased to find the lowest value for which learning is observed. Thereupon, the entropy coefficient \code{ent\_coef} must be decreased until learning is not efficient anymore. The other hyper-parameters could then be perturbed for trading-off exploration and exploitation even more. 
+
+We should note that the approach mentioned above did not leverage any particular structure of the loading pattern problem beyond the shape of the reward. The approach is problem agnostic in that it can be extended to any other engineering problem in particular with combinatorial structure, where physic solver or SO-based approaches must be utilized.  Typically, RL can seamlessly replace GA as the optimizer in \cite{yilmaz2022lot} for solving an instance of the Hybrid Flowshop Scheduling Problem (HFSP). An action would represent a chromosome structure, which results in a candidate. If the episode length \code{NF} is greater than 1 (which we argument against), \code{NF} HFSP solutions or chromosomes are generated per episode. The difference with this paper of course is that we provide one solution based on the template strategy (see section \ref{sec:description_core}). In \cite{yilmaz2022lot} however, they utilize GA as a decision-support tool to gain managerial insights about strategy implemented to solve a problem. Utilizing our approach instead could help improve their insights on lot streaming strategies and subplots methodologies for gaining even more performance on the HFSP. Similarly, \cite{seurin2023pareto} addresses the multi-objective version of our problem and the multi-objective RL can replace the NSGA-II in the Multi-Objective Disassembly Line Balancing Problem (MODLBP) \cite{yilmaz2022tactical} to gain managerial insights about tactical strategies and operational scenarios for the MODLBP \cite{yilmaz2022tactical}.
+
+In section \ref{sec:applicationtobenchmark} we apply this approach to classical benchmarks and empirically demonstrate that the aforementioned approach extends to other types of problems.
+
+\subsection{Application of the method to classical benchmarks}
+\label{sec:applicationtobenchmark}
+
+In this section, we apply our approach to four classical benchmark functions: one is the Sphere function and the others originate from the CEC17 test suite \cite{awad2017problem} namely, func4 (shifted and rotated rosenbrock), func5 (shifted and rotated rastrigin), and func6 (shifted and rotated expended schaffer). For the \code{NF} and \code{nsteps} tests we choose an input dimension of nx equal to 2, while 10 for \code{ent\_coef}. As we are aiming at solving CO problems, the input space is a subset of $\{-35,35\}^{nx}$ for the Sphere and $\{-100,100\}^{nx}$ for the functions of the CEC17 test suite. Hence, the number of solutions is $(nx)^{70}$ or $(nx)^{200}$. Moreover, the data points in the discretization of \code{NF}, \code{nsteps}, and \code{ent\_coef} are spaced enough to illustrate the behavior of these parameters and are not guided by any desiderata of fine-tuned optimization. The benchmark, as well as the algorithm, are available in NEORL's package \cite{radaideh2023NEORL}. The results are showcased in figure \ref{fig:fullbenchmarks}, where the optimal objective for each function is the number times 100 (e.g., for func2 it is $2 \times 100 = 200$):
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale = 0.6]{full_benchmarks.png}
+    \caption{Application of our methodology with changes in (from top to bottom) \code{NF}, \code{nsteps}, and \code{ent\_coef} to four classical benchmarks (from left to right) Sphere, func4, func5, and func6. We use \code{ncores} equal 8. 20 experiments of 10,000 samples are run for each experiment for \code{NF} and \code{nsteps}, and 20,000 for \code{ent\_coef}. The other hyper-parameters are similar to that of the PWR loading pattern problem (see section \ref{sec:shortsummary}).}
+    \label{fig:fullbenchmarks}
+\end{figure}
+As observed on the first row of figure \ref{fig:fullbenchmarks}, \code{NF} equal to 1 outperforms the other. In practice, for the higher \code{NF} to converge to the optimal values, we needed to increase the number of samples collected to at least 40,000, matching the observation for the PWR problem, which is not efficient. For the second row, we observe a trade-off between the different \code{n\_steps}, where lower values result in faster convergence, but the value of 8 (hence \code{ncores}$\times$ \code{nsteps} = 64, similar to case 2 of table \ref{tab:nsteps_stats}) results in more stable learning (e.g, for func6 cases 2 and 4 have high variance). Lastly, for the third row, very high \code{ent\_coef} leads to no learning (e.g., 0.1 and 0.01 (for all but the Sphere)), due to the high randomness of the policy as observed for the PWR problem, while decreasing its value results in faster convergence. Interestingly, a value of 0.001 results in the global optimum systematically as observed for the PWR problem. We, therefore, demonstrated the extent to which our approach to applying RL described in the last paragraphs of section \ref{sec:shortsummary} is more sample efficient beyond only the PWR loading pattern optimization problem.
+%\section{Conclusions and areas for future research}
+\section{Concluding remarks}
+\label{sec:conclusion}
+Deep RL is a framework which gained popularity in recent years thanks to its ability to uncover solutions to problems which outclass expert designers \cite{bengio2018machine} with applications to ATARI games \cite{mnih2015human}, GO \cite{silver2017mastering}, or CO \cite{mazyavkina2021reinforcement} for instance. There, RL does not work with an analytical representation of an objective function but rather with objects (e.g., function approximators) that are constructed statistically with a large number of data and which are then mathematically optimized. In that respect, this work proposed the first-of-a-kind approach to deal with an RL-compliant PWR loading pattern optimization.
+ 
+ In this work, a first-of-a-kind hyper-parameter study of the RL framework applied to solve the loading pattern optimization problem over 24 hours is presented.  The shape of the reward, specifically the \code{weights} assigned to the constraints, is pivotal in finding feasible patterns. It behaves as a fudge factor that could lead to substantial economical improvement but also affect the stability of the solutions found throughout different experiments, which is an essential factor for scaling the algorithm to other applications. On top of that, we found that the quality of the best LP found is highly dependent on the \textit{exploration/exploitation} trade-off that manifests through the \code{NF}, \code{n\_steps}, and \code{ent\_coef} coefficients. Low values for the latter result in high exploitation, which allows the agents to find high-quality patterns very rapidly, and is interesting for the core designer in case of emergency core re-design. We show that the optimum value for \code{NF} is 1, which means that RL is optimally leveraged when it is applied similar to a Gaussian Process where the acquisition function is learned via a policy, which then converges close to the optimum solution after a certain number of steps. However, the behavior for low values for \code{n\_steps} and \code{ent\_coef} is not always linear anymore, where a sweet spot must be found to trade off quality, speed of convergence, and stability. While \code{n\_steps} controls the quality of the estimation of the gradient of the loss, \code{ent\_coef} controls the randomness of the policy. They must both be decreased until no learning is observed or instability occurs to achieve the highest sample efficiency. Additionally, the small deviation of the SE metrics over the experiments for the set of hyper-parameters found demonstrated that RL-based approaches are robust and stable, which is what core designers are looking for to adopt a novel set of techniques in their work. We also briefly studied the other parameters but empirically showed that they were less important. 
+ 
+ Most importantly, we argue that for different engineering problems, the values can differ but the behavior could be similar. We demonstrated this by applying this approach to four classical benchmarks with an integer input space. It makes the approach developed in this work suitable for any large-scale constrained problem in which expensive physic solver or SO-based approaches must be utilized, in particular in the realm of CO.
+
+
+ On top of that, due to the nature of the end-user, it is fundamental to propose a multi-measure approach in the decision of determining the best set of hyper-parameters.  We show that classical metrics expected by the core designer such as the max objective is not sufficient anymore when dealing with the RL framework, for which the mean and standard deviation of the objective are testament of the potential of the RL agents to improve in longer runs. In this prospect, we proposed to look at the max objective and the best mean objective per episode, the improvement ratio, the mean objective SE, the $\sigma$SE, and the p-value of statistical tests namely FT and NT. Nonetheless, these metrics based on a single scalar value for the reward will not be sufficient when a multi-objective-based optimization is performed. In this prospect, the work in \cite{seurin2023pareto} extends the current study with multi-objective RL and attempts to propose appropriate supplementary metrics to tackle this limitation. 
+ 
+ Lastly, we found that the economic gain from the original pattern (with slightly empirically optimized hyper-parameters) of appendix \ref{sec:weights_study} with LCOE at 5.590 to 5.529 of appendix \ref{sec:entcoef_study} is of the order of 535,000 - 642,000 \$/year/plant for a 1,000 and 1,200 MWe NPP, respectively. This illustrates the requirement to conduct a thorough hyper-parameter study. Nevertheless, these hyper-parameters only belong to the realm of the PPO framework and we have not compared the latter against legacy SO heuristic-based methods such as SA, GA, or TS. This comparison will be all the more interesting as we argued that using \code{NF} equal to 1 can be thought of as if the agents are trying to find the steepest ascent direction based on their understanding of the curvature of the objective space, while SO-based methods are taking random steps to find it. Can we gain robustness and stability when these directions are learned? Future work should include the comparison to ensure the benefit of introducing a RL-based framework for the PWR optimization problem. But the works conducted in \cite{radaideh2021large,radaideh2021physics} on lattice and bundle designs, respectively, give hope that RL can outperform SO-based heuristic methods on our problem. 
+
+\paragraph{Acknowledgments}
+This work is sponsored by Constellation (formally known as Exelon) Corporation under the award (40008739). Feedback from Neil Huizenga  and Antony Damico of Constellation were helpful in setting up the problem constraints. 
+
+\paragraph{Data availability statement}
+The sponsor of this study did not give written consent for their data to be shared publicly, so due to the sensitive nature of the research supporting data is not available.
+
+\paragraph{Authors Contributions}
+ Methodology, software, formal analysis and investigation, visualization, writing - original draft preparation: Paul Seurin; conceptualization, methodology, funding acquisition, supervision, writing - review and editing: Koroush Shirvan. All authors have read and agreed to the published
+version of the manuscript.
+
+\section*{Declarations}
+\paragraph{Conflict of Interests}
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+\small
+ \setlength{\baselineskip}{12pt}
+ \bibliographystyle{manuscripts}
+\bibliography{manuscripts}
+\pagebreak
+\normalsize
+\appendix
+\input{annexe.tex}
+
+\end{document}

@@ -1,0 +1,712 @@
+\section{Appendix 1: PPO hyper-parameters studies}
+\label{sec:ppohyperparameterstarts}
+In this appendix we provide the results of the major hyper-parameters alluded in section \ref{sec:ppo_hyperparameters}. The shape of the reward via \code{weights} , the length of an episode via \code{NF} , the \code{n\_steps}, and the entropy coefficient \code{ent\_coef}.
+\subsection{\code{weights} study}
+\label{sec:weights_study}
+Defining the reward for the agent behaving in accordance with the designer's goals is called  \textit{reward hacking}. Defining the reward to optimize the performance of the agents is called \textit{reward shaping}. This study explores the influence of setting weights on design constraints. Weights of 1,000, 5,000, 15,000, 25,000, 40,000, 50,000, 75,000, and 100,000 are considered. Moreover, all constraints will have the assignment of the same weight, since good quality results could not be found when we manually experimented with varying the individual weights. To compare the obtained pattern on the same baseline, the penalization of the obtained pattern is normalized as follows \cite{konak2006multiobjective}:
+\begin{equation}
+    D(x,\mathcal{C}) = \sqrt{\sum_{i \in \mathcal{C}}(\frac{c_i(x) - c_i}{c_{i_{max}} - c_{i_{min}}})^2}
+    \label{eq:normalized_obj}
+\end{equation}
+where $D(x,\mathcal{C})$ is the distance of the core $x$ to the space of feasible core $\mathcal{C}$ in the objective space, and $c_i, i \in \{1,...,5\}$ are the constraints defined in \ref{sec:objandconstr} ($c_6,c_7$ are always satisfied), which ranges are given in table \ref{tab:rangevlues}. 
+\begin{table}[H]
+    \centering
+    \caption{Upper and lower bounds utilized to calculate the range in equation \ref{eq:normalized_obj}. They were obtained by running one optimization and taking a lower and upper bound with the best and worst cases.}
+    \begin{tabular}{c|c|c}
+    \hline
+    FOMs & Upper Bound & Lower Bound \\
+    \hline
+    $F_q$ [-] & 2.911 & 1.768 \\
+    $F_{\Delta h}$ [-] & 2.206 & 1.429 \\
+    $C_b$ [ppm] & 1405.1 & 952.7 \\ 
+    Pin Peak $Bu$ [GWd/tHm] & 68.044 & 55.506 \\ 
+    Cycle length [days] & 530.8 & 468.9   \\
+         \hline
+    \end{tabular}
+    
+    \label{tab:rangevlues}
+\end{table}
+Figure \ref{fig:bothweightstudy} showcases the evolution of the mean score (left) and max objective (right) per generation. A generation is defined such that the experiments span 100 generations, therefore one contains between 400 to 500 SIMULATE3 evaluations. As expected, the mean score is constantly increasing meaning that the agents are learning. The intricate behavior starting around the 60th generation is happening when a feasible pattern has been found and the agents are only optimizing the LCOE. This occurs at about the same time for all \code{weights}. It is interesting to note that this happens for both mean score and max objective signifying that the agents behave well almost at the same time as they are hitting a feasible pattern and hence received a boost in reward. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale = 0.45]{bothweight_study.png}
+    \caption{Error bar plots averaged over 10 experiments for the Max (left) and Mean (right) Objective
+per episode for different \code{Weights} values. The Mean was obtained by averaging the mean score obtained per episode within a window of X episodes, where X depends on the total number of samples generated (usually around 400 samples for \code{NF} equal to 1 to obtain 100 generations). The length of the bars is two $\sigma$.}
+    \label{fig:bothweightstudy}
+\end{figure}
+
+
+Additionally, the seemingly less smooth behavior compared to other hyper-parameter studies (e.g., see figures \ref{fig:errorbarnfstudy} and \ref{fig:errorbarnstepsstudy}) is due to the normalizing of the objective with equation \ref{eq:normalized_obj}. In all cases, the max objective keeps increasing late during the search, as confirmed by the high IR provided in table \ref{tab:weightstudy_stats} and the standard deviation are in the same range. Therefore, no significant differences can be observed in terms of absolute performance. On top of that, the p-value for the FT with the max score is 0.351 and 0.876 for the mean. Hence these tests failed. However, we decided to stop the experiments as we did not observe significant differences in the performance with the different \code{weights} in contrast to the hyper-parameters studied in the next sections. We defined however more metrics at the beginning of this section and tables \ref{tab:weightstudy_stats} and \ref{tab:weightstudy_stats2} could provide more information and better-informed pathways to decide which \code{weights} to pursue the study with.
+
+In light of table \ref{tab:weightstudy_stats}, the best average behavior for the max objective is obtained with \code{weights} 75,000, which also achieves a very competitive best pattern overall. In RL literature, it is sometimes advised to normalize the reward, otherwise, the magnitude of the gradients will be too different. But here one small change in the core with 75,000 may result in the blowout of the cumulative reward, which could be counter-intuitive. The fact that \code{NF} and \code{n\_steps} equal 2 and 4, respectively, and the use of a clipping term and \code{max\_grad\_norm} mitigate this effect. On top of that, the best pattern was found with \code{weights} 5,000,  while the case 1,000 achieves the best mean score per episode with 25,000 being very close for this metric. But the behavior among the \code{weights} is not linear, as a \code{weights} of 25,000 achieves better results than 40,000, 50,000, and 100,000 in total, while a better mean score than 75,000 and almost as good max objective.  Additionally, case 25,000 achieves the second best performance in terms of mean score, with a mean objective SE at - 5.7360, the highest one. Even though the differences do not look significant, the case 25,000 has the lowest $\sigma$SE at the last generation given in table \ref{tab:weightstudy_stats2}, signifying greater stability. Hence if the input variables were to change without the possibility to run 10 experiments due to time constraints (e.g., in case of emergency core redesign) we could imagine that utilizing 25,000 could help find a feasible pattern with a higher probability.
+\begin{table}[H]
+    \centering
+    \caption{Statistics for each \code{weights} value over 10 experiments. MO stands for Max Objective and Me for Mean objective per episode. The objectives are calculated based on the normalized objective value of equation \ref{eq:normalized_obj}. The best objective values are highlighted in red.}
+    \begin{tabular}{c|c|c|c|c|c|c|c|c}
+      \hline
+    \code{weights} & Avg (MO) & Best (MO) & $\sigma$ (MO) & IR (MO) & Avg (Me) & Best (Me) & $\sigma$ (Me) & IR (Me) \\
+     \hline
+         1,000   & -5.438 & -4.570 & 0.5247 & 0.946 & \textcolor{red}{-5.500} & \textcolor{red}{-4.570} & 0.4536 & 0.952\\
+         5,000   & -5.460 & \textcolor{red}{-4.569} & 0.4362 & 0.992 & -5.680  & -5.557 & 0.086711 & 0.988\\
+         15,000  & -5.132 & -4.582 & 0.4994 & 0.787 & -5.725 & -5.602 & 0.08524 & 0.981\\
+         25,000  & -4.953 & -4.590 & 0.4716 & 0.973 & -5.573 & -4.683 & 0.2993 & 0.974\\
+         40,000  & -5.356 & -4.577 & 0.4834 & 0.968 & -5.693 & -5.614 & 0.04588 & 0.978\\
+         50,000  & -5.447 & -4.628 & 0.4037 & 0.993 & -5.685 & -5.588 & 0.05552 & 0.997\\
+         75,000  & \textcolor{red}{-4.947} & -4.579 & 0.508 & 0.998 & -5.683 & -5.606 & 0.0555 & 0.9555\\
+         100,000  & -5.480 & -4.572 & 0.441 & 0.849 & -5.717 & -5.635 &  0.05234 & 0.966\\
+    \end{tabular}
+    \label{tab:weightstudy_stats}
+\end{table}
+\begin{table}[H]
+    \centering
+    \caption{Mean Objective SE and the $\sigma$SE for the different \code{weights} cases.  The latter is obtained by averaging the reward obtained over the last generation and over 10 experiments. The best performance for both is obtained with \code{weights} equal to 25,000. The best values are highlighted in red.}
+    \begin{tabular}{c|c|c}
+      \hline
+    \code{Weights} & Mean Objective SE & $\sigma$SE \\
+     \hline
+         1,000   & -5.8573 & 0.09069\\ 
+         5,000   & -5.8074 & 0.08265\\
+         15,000  & -5.8096 & 0.08514\\
+         25,000  & \textcolor{red}{-5.7360} & \textcolor{red}{0.07093}\\
+         40,000  & -5.7971 & 0.0841\\
+         50,000  &  -5.7956 & 0.0838\\ 
+         75,000  &  -5.7590 & 0.09441\\ 
+         100,000 & -5.8166 & 0.08657\\ 
+    \end{tabular}
+    \label{tab:weightstudy_stats2}
+\end{table}
+The breakdown of the FOMs of the best patterns found in each case is given in table \ref{tab:weightstudy_bestpattern}. The constraints $c_6$ and $c_7$ turned out to be usually satisfied and were omitted from the table, which will be the case in the remainder of the study. It should be noted that for the best pattern, some constraints are close to being tight (e.g., $F_{\Delta h}$, $C_b$, and Pin Peak $Bu$) in contrast to the one found with \code{weights} 25,000 for instance. This may show that to optimize the LCOE further, penalties on some constraints may need to be taken.
+
+The 2D projection of the best pattern found (i.e., with \code{weights} equal to 5,000) is given in figure \ref{fig:bestpatternpostweights}. This case presents a high IR and a low $\sigma$SE throughout the 10 experiments. It means that the agents are constructing high-quality patterns at each episode, which is a testament of the agents's understanding of the objective space. There, the agents employed several classical designer's tactics even though no prior knowledge of the physics involved was given before the search started: the inner part of the core is mostly arranged like a checkerboard between fresh and once-burned FAs, a higher BP concentration is given to the FAs closer to the center, and FAs with a higher $k_{\infty}$ are located near the periphery, which help to reduce the peaking factor and boron concentration \cite{lin2014themaxmin}. This is worth noting as many papers instead impose that these expert heuristics are satisfied in the decision process as in \cite{wu2016quantum,lin2014themaxmin,garco2008new}. However, usually designer put more WABA in the diagonal and the ring of fire because the power is shifted from the center of the core (where low enrichment and high IFBA are placed) to there. But here the agent decided to also utilize high WABA in-board but not in the ring of fire. This may be explained by the fact that WABA costs money, hence reducing its amount is pivotal, and removing it from the ring of fire may be the path of lowest resistance. Other Expert tactics for twice-burned include choosing once-burned with the highest $k_{\infty}$ to obtain enough carry-over energy for the next cycle and FAs with low average burnup to limit the risk of high peak pin burnup at the periphery. Here the average burnup of twice-burned at EOC is not high but not particularly low neither for the ones on both sides of the diagonal (48.5 GWd/tHm at BOC). These FAs will then peak at 61.0. The peak pin burnup is also close to 62 GWd/tHm (61.3 GWd/tHm for the fourth FA starting from the left or the top). This may be explained because we are not only studying safety parameters. There is no penalty as long as the peak pin burnup is within 62 GWd/tHm, but the LCOE is decreased by extracting more energy out of these FAs.
+ \begin{table}[H]
+    \centering
+    \caption{Best patterns found for each case throughout all experiments. An Objective above - 5.00 signifies that the pattern is feasible and the agents are optimizing the LCOE only.}
+    \begin{tabular}{c|c|c|c|c|c|c|c}
+    %\toprule
+      \hline
+     \code{Weights} & Objective & LCOE & Cycle length & $F_q$ & $F_{\Delta h}$ & $C_b$ & Pin peak $Bu$\\
+     \hline
+         5,000    & \textcolor{red}{-4.569} & 5.569 & 519.1 & 1.812 & 1.448 & 1189.3 & 61.262\\
+         1,000    & -4.570 & 5.570 & 510.8 & 1.831 & 1.436 & 1195.8 & 61.581\\
+         100,000  & -4.572 & 5.572 & 507.4 & 1.801 & 1.439 & 1179.5 & 61.485\\
+         40,000   & -4.577 & 5.577 & 505.5 & 1.813 & 1.449 & 1199.1 & 59.759\\
+         75,000   & -4.579 & 5.579 & 501.1 & 1.834 & 1.450 & 1198.3 & 60.773\\
+         15,000   & -4.582 & 5.582 & 511.3 & 1.810 & 1.419 & 1190.6 & 61.518\\
+         25,000   & -4.590 & 5.590 & 511.7 & 1.835 & 1.438 & 1183.0 & 61.058\\
+         50,000   & -4.628 & 5.628 & 505.0 & 1.824 & 1.448 & 1138.1 & 59.767\\
+   \end{tabular}
+    
+    \label{tab:weightstudy_bestpattern}
+\end{table}
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale = 0.6]{bestpattern_boths_weights.png}
+    \caption{Lower right quadrant of the best pattern found obtained for \code{weights} equal to 5,000. On the left, from top to bottom: Assembly group number, fuel average enrichment, number of IFBA rods, and number of WABA rods. Blue is for twice-burned FAs, green for once-burned, and red for fresh (colors pattern also utilized in ROSA \cite{verhagen1997rosa}). In violet, location where WABA cannot be placed. On the right, from top to bottom: Beginning of cycle $k_{\infty}$ and assembly average burnup, peak pin Burnup at EOC, and $F_{\Delta h}$ when the maximum over the cycle is reached. R means reflector, where the water is.}
+    \label{fig:bestpatternpostweights}
+\end{figure}
+
+To conclude this section, we can say that the \code{weights} do not participate in the \textit{exploration/exploitation} trade-off, which makes sense as they are affecting the magnitude of the reward only. It remains a very important parameter nonetheless. It behaves as a fudge factor which could result in an improvement on the economic side and the stability of the agents. Comparing the LCOE of the patterns found with \code{weights} 5,000 and 25,000, a gain of about 180,000 and 220,000 \$/year/plant for a 1,000 and 1200 MWe NPP, respectively, could be achieved by tuning the \code{weights} appropriately. However, we demonstrated with a multi-measure analysis that looking at the maximum objective is not sufficient, specifically because it does not necessarily yield to a better mean objective SE, which does not offer high certainty to find a feasible pattern rapidly with a different seed. The latter becomes instrumental if different input variables were given and a new problem must be solved rapidly which is achieved with more certainty with 25,000 as \code{weights}. All the observations made in this section motivated us to pursue with 25,000 as it presented the best trade-off between our multiple performance metrics.
+
+\subsection{Numframes \code{NF} study}
+\label{sec:nf_study}
+A prior study \cite{radaideh2023NEORL} showed that \code{NF} should not vary beyond 100. Here, the values are 1, 2, 7, 10, 25, 75, and 100. Figure \ref{fig:errorbarnfstudy} showcases the evolution of the mean score and max objective over 100 generations. For all \code{NF} there is continuous learning occurring however it is clear in this figure that very low \code{NF} values (i.e., 1 and 2) outperform higher ones, which is confirmed by table \ref{tab:nfstudy_stats} for the Avg (Me). Regarding the right-hand side of figure \ref{fig:errorbarnfstudy}, we could imagine that the performance of the case \code{NF} equal to 1 saturates after the 50th generation. Nevertheless, this is simply the effect of scaling. The IR is high above 87\% meaning that the agents are still improving their learning of the system and the high $\sigma$SE of table \ref{tab:nfstudy_stats2} confirms this hypothesis. More generally for all cases, the IR is high for both the mean and the max objective, meaning that the agent's decisions are indeed improving, except for the max objective of case 100, which may hint that this solution has been found randomly. The very low mean objective SE for case 100 given in table \ref{tab:nfstudy_stats2} confirms this hypothesis. 
+
+10 experiments for each case were ran. The p values for the FT tests are all 0.00. Cases 1,2, and 7 were not statistically significantly different  as provided in tables \ref{tab:pvalue_numframesstudymeanscore} and \ref{tab:pvalue_numframesstudymaxscore}. However, the p-value of case 1 versus case 7 is lower than that of case 2 versus case 7 for both max and mean score, which may hint that case 1 is superior. The differences are sharper than that of the \code{weights}'s study. This should mean that 1 outperforms the other cases, which aligns with our previous observation and we decided to pursue with this value for the following studies.
+
+Overall, it is clear that the case \code{NF} equal to 1 outperforms the others and tables \ref{tab:nfstudy_stats} and \ref{tab:nfstudy_stats2} show that there is a very sharp learning improvement when \code{NF} is decreased at a value lower than 7, while the difference is less obvious above 7.  In addition, we can observe in table \ref{tab:nfstudy_stats} that a lower value of \code{NF} usually yields a lower variance between the results at each generation and always a better average behavior promising better stability.  In the first order, therefore, \code{NF} is a manifestation of the \textit{exploration/exploitation} trade-off. Higher \code{NF} yields higher exploitation and lower mean objective but sometimes a better max objective (e.g., the max objective with \code{NF} equal to 75 exceeds that of 2 to 25), which is of interest to the core designer. For low and high values of \code{NF}, the $\sigma$SE decreases as seen in table \ref{tab:nfstudy_stats2}. This column shows that something else is happening. A high \code{NF} does not necessarily involve slower convergence but in light of the column mean objective SE it does imply a lower mean objective. Therefore high \code{NF} should be avoided even if the optimization was run longer due to the risk of being stuck in a local optimum. 
+
+It could be surprising to observe such a low mean objective SE even for the case \code{NF} equal to 2 compared to 1.  Having \code{NF} equal to 1 with the restarted state being the best ever found can be thought of as a gradient ascent problem: At each episode, based on the understanding of the curvature of the objective space, the agents are trying to find the steepest ascent direction similar to SO-based methods where the steps are taken however randomly.Indeed in SO, the agents are following a rule of thumb (i.e. heuristic) in the decision process. It is a guided random walk. In RL, we have a policy that generates solutions, while a critic learns and evaluates the quality of these solutions. The heuristic is learned. In this sense, it is similar to a Gaussian Process \cite{frazier2018tutorial} in which the acquisition function is a policy we learn, and the policy converges close to the optimum solution found. To the author of this work, there is no obvious mathematical intuition behind greater \code{NF}. We initially thought that asking the agent to solve multiple LPs at the same time would help as one state of a pattern is the restarting state for the action to choose the next pattern. These information could have helped the agent draw better conclusions from one state to the next. Nevertheless, it is clear that we are asking the agents to solve multiple loading designs at the same time, therefore more samples must be drawn to fully comprehend how an episode is constructed, which might be more difficult and explains why it is seemingly easier with the lowest \code{NF}. This study may also explain why value-based methods (e.g., Deep Q-Learning (DQN) \cite{mnih2015human} or Double Q-Learning \cite{van2016deep}) were not performing well.  One explanation might be that they required one or multiple-step look-ahead to optimize the Q-function \cite{hessel2018raindbow}. However, as it was described in section \ref{sec:mdp}, each action is a core created. Since a full core is created for each action, each one fundamentally should not influence the generation of the next and the Q-update might be ineffective.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale = 0.6]{botherrorbarplot_numframesstudy.png}
+    \caption{Error bar plots averaged over 10 experiments for the Max (left) and Mean (right) Objective per episode for different \code{NF} values. The Mean was obtained by averaging the mean score obtained per episode within a window of X episodes, where X depends on the total number of samples generated (usually around 400 samples for \code{NF} equal to 1 to obtain 100 generations). The length of the bars is two $\sigma$.}
+    \label{fig:errorbarnfstudy}
+\end{figure}
+
+
+ \begin{table}[H]
+    \centering
+     \caption{Statistics for each \code{NF} value over 10 experiments. MO stands for Max Objective and Me for Mean objective per episode. The best result for each column is highlighted in red.}
+    \begin{tabular}{c|c|c|c|c|c|c|c|c}
+      \hline
+     Numframes & Avg (MO) & Best (MO) & $\sigma$ (MO) & IR (MO) & Avg (Me) & Best (Me) & $\sigma$ (Me) & IR (Me) \\
+     \hline
+          1 & \textcolor{red}{-4.599}  & \textcolor{red}{-4.556} & 0.0257  & 0.879 & \textcolor{red}{-4.600}   &   \textcolor{red}{-4.5560} & 0.0257 & 0.879\\
+          2 &-5.454  &  -4.556 & 1.646   & 0.879 & -18.009  &   -4.5600 & 17.6663& 0.807\\
+         7  &-30.421 & -14.403 & 18.408  & 0.846 & -624.044 &  -518.000 & 95.611 & 0.797\\
+         10 & -51.106 & -9.100 & 27.522 & 0.855 & -790.045 &  -625.610 & 67.623 &  0.998\\
+         25 &-44.986 &  -5.710 & 24.495  & 0.567 & -1200.059&  -1036.77 & 91.847 & 0.991\\
+        75  &-43.779 &  -4.566 & 35.0578 & 0.863 & -1479.925&  -1316.27 & 90.349 & 0.799\\
+        100 &-53.470 & -18.956  & 30.311  & 0.691 &-1648.797 & -1434.82  & 234.060& 0.855\\
+    \end{tabular}
+    \label{tab:nfstudy_stats}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Mean Objective SE and $\sigma$SE for the different \code{weights} cases.  The latter is obtained by averaging the reward obtained over the last generation and over 10 experiments. The case \code{NF} equal to 1 has the best combination of both.}
+    \begin{tabular}{c|c|c}
+      \hline
+    \code{NF} & Mean Objective SE & $\sigma$SE \\
+     \hline
+         1&  \textcolor{red}{-14.705}    & \textcolor{red}{67.368}\\ 
+         2&  -188.447   & 177.915\\
+         7&  -1548.257  & 514.939\\
+         10&  -1689.118  & 481.794\\
+         25&  -1928.256  & 335.519\\
+         75&  -1887.0760 & 186.982\\
+         100& -2174.317  & 118.620\\
+    \end{tabular}
+    \label{tab:nfstudy_stats2}
+\end{table}%
+
+
+\begin{table}[H]
+    \centering
+    \caption{p-value for the NT between the \code{NF} instances for the maximum score. The FT succeeded with p-value equal to 0.00.  \code{NF} equal to 1 is the case that outperforms most of the other experiments. The tests that succeeded are highlighted in red.}
+    \begin{tabular}{c|c|c|c|c|c|c|c}
+    \hline
+        \code{NF} & 1 & 2 & 7 & 10 & 25 & 75 & 100 \\
+    \hline
+1   & 1.000000 & 0.900000 & \textcolor{red}{0.026662} & \textcolor{red}{0.001000} & \textcolor{red}{0.002000} & \textcolor{red}{0.013555} & \textcolor{red}{0.00100} \\
+2   & - & 1.000000 & 0.114484 & \textcolor{red}{0.004459} & \textcolor{red}{0.013555} & \textcolor{red}{0.066772} & \textcolor{red}{0.00654} \\
+7   & - & - & 1.000000 & 0.900000 & 0.900000 & 0.900000 & 0.90000 \\
+10  & - & - & - & 1.000000 & 0.900000 & 0.900000 & 0.90000 \\
+25  & - & - & - & - & 1.000000 & 0.900000 & 0.90000 \\
+75  & - & - & - & - & - & 1.000000 & 0.90000 \\
+    \end{tabular}
+    
+    \label{tab:pvalue_numframesstudymaxscore}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{p-value for the NT between the \code{NF} instances for the mean score per episode. The FT succeeded with the p-value equal to 0.00. If $\alpha = 0.1$, which is sometimes considered \cite{derrac2011apractical}, \code{NF} equal to 1 is the case that outperforms most of the other experiments.}
+    \begin{tabular}{c|c|c|c|c|c|c|c}
+    \hline
+        \code{NF} & 1 & 2 & 7 & 10 & 25 & 75 & 100 \\
+    \hline
+1  & 1.000000 & 0.900000 & 0.339674 & 0.087581 & \textcolor{red}{0.001315} & \textcolor{red}{0.001000} & \textcolor{red}{0.001000} \\
+2  & - & 1.000000 & 0.777817 & 0.404855 & \textcolor{red}{0.019139} & \textcolor{red}{0.001000} & \textcolor{red}{0.001000} \\
+7  & - & - & 1.000000 & 0.900000 & 0.503923 & \textcolor{red}{0.022624} & \textcolor{red}{0.005411} \\
+10 & - & - & - & 1.000000 & 0.869118 & 0.129190 & \textcolor{red}{0.042827} \\
+25 & - & - & - & - & 1.000000 & 0.808251 & 0.564789 \\
+75 & - & - & - & - & - & 1.000000 & 0.900000 \\
+    \end{tabular}
+    \label{tab:pvalue_numframesstudymeanscore}
+\end{table}
+
+
+Figure \ref{fig:bestpattern_nfstudy} showcases the 2D projection of the best pattern found in this study (corresponding to the top row of table \ref{tab:nfstudy_bestpattern}). There, in contrast to figure \ref{fig:bestpatternpostweights}, rings of fire are observed from the periphery to the center, which is also a typical designer strategy. Lastly, by comparing the solution of \code{NF} equal to 1 and 2 in table \ref{tab:nfstudy_bestpattern}, the constraints are tighter for this design, which helped again to reduce the LCOE. 
+
+\begin{table}[H]
+    \centering
+    \caption{Breakdown of the FOMs for the best patterns found for each case throughout all experiments. An objective above - 5.00 signifies that the pattern is feasible and the agents are optimizing the LCOE only.}
+    \begin{tabular}{c|c|c|c|c|c|c|c}
+      \hline
+     Numframes & Objective & LCOE & Cycle length & $F_q$ & $F_{\Delta h}$ & $C_b$ & Pin peak $Bu$\\
+     \hline
+          1 &  \textcolor{red}{-4.547} & 5.547 & 510.8 & 1.845 & 1.440 & 1178.8 & 61.198 \\
+          2 &  -4.556 & 5.556 & 510.6 & 1.841 & 1.438 & 1178.4 & 61.172 \\
+        75   & -4.566  & 5.566 & 519.0 & 1.764 & 1.448 & 1195.3 & 61.204\\
+         10  & -9.100  & 5.735 & 498.9 & 1.863 & 1.463 & 1191.8 & 61.285\\
+         7   & -14.403 & 5.602 & 511.7 & 1.841 & 1.457 & 1221.7 & 62.082\\
+         25  & -17.734 & 5.686 & 493.4 & 1.856 & 1.473 & 1208.1 & 59.623\\
+         100 & -18.956 & 5.610 & 513.4 & 1.867 & 1.473 & 1169.3 & 62.872\\
+    \end{tabular}
+    \label{tab:nfstudy_bestpattern}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale = 0.6]{bestpattern_boths_nf.png}
+    \caption{Lower right quadrant of the best pattern found with \code{NF} equal to 1. On the left, from top to bottom: Assembly group number, fuel average enrichment, number of IFBA rods, and number of WABA rods. Blue is for twice-burned FAs, green for once-burned, and red for fresh (colors pattern also utilized in ROSA \cite{verhagen1997rosa}). In violet, location where WABA cannot be placed. On the right, from top to bottom: Beginning of cycle $k_{\infty}$ and assembly average burnup, peak pin Burnup at EOC, and $F_{\Delta h}$ when the maximum over the cycle is reached. R means reflector, where the water is.}
+    \label{fig:bestpattern_nfstudy}
+\end{figure}
+
+
+Because the case \code{NF} equal to 2 presented a higher variance with a good Avg (Me), hence learning potential, we also tried to restart the experiment with the trained policy from this case for another one day of optimization. We also increases \code{NF} to 250 and stopped at 6 experiments because the $\sigma$ were very low. It turned out that 75 was the best case on average but no parametric tests succeeded as the differences were not significant, and the results are not presented for conciseness. The better performance of 75 (max and average max objectives of -4.558 and -4.573 respectively with $\sigma \sim 0.0120$ averaged over 6 experiments) corresponds to a boost in exploration. In consequence, depending on the context of optimization, there is a trade-off between exploration/exploitation. Preparing the next core cycle, which can take weeks, starting with multiple runs with higher \code{NF} might lead to achieving a better solution than lower \code{NF}, but we should be wary of the faster convergence if \code{NF} is increased.
+
+To conclude this section, we can say that \code{NF} plays a role in the \textit{exploration/exploitation} trade-off. A higher value will yield a lower mean objective. Nevertheless, a lower value may lead to faster convergence, hence reaching and being trapped in an unacceptable local optimum (see case 75). This study also highlighted the importance of fine-tuning. Indeed, a very small change in \code{NF} may drastically change the optimum value found. In terms of the LCOE between 1 and 2 for a 1,000 or 1,200 MWe NPP, we get a gain of 79 - 95 k \$/yr.  On top of that, case 7 did not even find a feasible design within one day of optimization, which is fundamental for certain application as we alluded in section \ref{sec:prerequisite}.
+\subsection{\code{n\_steps} study}
+\label{sec:nsteps_study}
+The parameter \code{n\_steps} also plays a role in the \textit{exploration/exploitation} trade-off as presented in section \ref{sec:ppo_hyperparameters}. The chosen values for the study are 1, 2, 4, 6, 8, 10, 25, 35, and 75, which were run over 10 experiments. Figure \ref{fig:errorbarnstepsstudy} showcases the evolution of the max and mean objective over 100 generations. It should be observed that there is 
+ smooth learning for all values of \code{n\_steps}. 
+
+Similar to the \code{NF} study, large values of \code{n\_steps} yields poor results with an average lower than - 5.00. The best patterns found are not even feasible for cases 35 and 75 as highlighted by table \ref{tab:nsteps_stats}. The mean objective columns of table \ref{tab:nsteps_stats} are omitted as they are similar to that of the max objective with \code{NF} equal to 1. They all have a high IR except for case 75, but its low mean objective SE and $\sigma$SE hint that the solution was found randomly. Moreover, the variance in the results and the $\sigma$SE also increased with \code{n\_steps} for large values. However, this behavior is not linear anymore below 4, where case 1 and 2 yield worse performances than 4, 6, 8, and 10 with a lower mean objective SE and a higher $\sigma$SE as shown in table \ref{tab:nsteps_stats2}. This may be a manifestation of the \textit{exploration/exploitation} trade-off as too few samples are recorded with \code{n\_steps} equal to 1 or 2, which yields sub-optimum behavior. Column $\sigma$SE helps confirm the significance of \code{n\_steps} regarding the trade-off. The higher the value the higher the $\sigma$ except below 4. Moreover, the cases 1 and 2 present a high $\sigma$ (MO), showing that they are also unstable.  
+
+Multiply by \code{ncores}, \code{n\_steps} define the number of samples utilized for the estimation of the gradient of the loss (see Equation \ref{eq:ppoloss}) to update $\theta$, and hence its quality. We hypothesize that the previous behavior is explained because low values (e.g., 1) result in a very poor local approximation of the gradient (i.e., low bias). On the other hand, larger values (e.g., 4, 6, 8...) may decrease the bias of the estimator but increase the variance due to the presence of more terms. In the beginning, the loss is constructed with many samples of poor quality, impeding the speed of learning. Once better samples are obtained, learning happens, and good solutions can be obtained.
+  
+The mean objective SE and $\sigma$SE increase with \code{n\_steps} above 4, which confirms that this hyper-parameter directly control the level of exploration and exploitation in the search. With an average max objective of -4.599, the best average behavior is observed with 4, while 6 is very close but obtained a better max objective. Looking at the mean objective SE in table \ref{tab:nsteps_stats2} we can see however that case 4 is producing better patterns on average for the last generation with a lower $\sigma$SE, indicating  higher stability and probability to generate a good pattern.
+
+The NTs on the max objective did not succeeded between 2, 4, 6, 8, and 10 as shown in table \ref{tab:pvalue_nstepsstudy}, which is expected considering the few differences observed in table \ref{tab:nsteps_stats}. The case 6 succeeded against every value above 10 while the cases 4, 8,, and 10 succeeded against 2 out of the three values, therefore they might be considered the best cases. However, the considerations summarised above show that case 4 is superior to other metrics. For these reasons, we decided to keep \code{n\_steps} equal to 4 for the remainder of the study. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale = 0.5]{bothfoms_nsteps.png}
+    \caption{Error bar plots averaged over 10 experiments for the Max (left) and Mean (right) Objective
+per episode for different \code{n\_steps} values. The Mean was obtained by averaging the mean score obtained per episode within a window of X episodes, where X depends on the total number of samples generated (usually around 400 samples for \code{NF} equal to 1 to obtain 100 generations). The length of the bars is two $\sigma$.}
+    \label{fig:errorbarnstepsstudy}
+\end{figure}
+ \begin{table}[H]
+    \centering
+     \caption{Statistics for each \code{n\_steps} values over 10 experiments. MO stands for Max Objective. The Mean objective per episode is not included because it is equal to the Max Objective one for \code{NF} equal to 1. The best result for each column is highlighted in red.}
+    \begin{tabular}{c|c|c|c|c}
+      \hline
+     \code{n\_steps} & Avg (MO) & Best (MO) & $\sigma$ (MO) & IR (MO) \\
+     \hline
+     1 &  -4.616 & -10.6647 & 6.3040 & 0.947 \\
+        2    & -4.902  & -4.551 & 0.548 & 0.925\\
+        4    & \textcolor{red}{-4.599}  & -4.556 & 0.027 & 0.879\\
+        6    & -4.603  & \textcolor{red}{-4.523} & 0.025 & 0.981\\
+        8    & -4.867  & -4.544 & 0.530 & 0.866\\
+        10   & -4.944  & -4.540 & 1.026 & 0.925\\
+        25   & -7.133  & -4.540 & 1.026 & 0.868\\
+        35   & -14.153 & -6.395 & 5.900 & 0.887\\
+        75   & -59.128 & -6.542 & 35.286 & 0.554\\
+    \end{tabular}
+    \label{tab:nsteps_stats}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Mean Objective SE for the different \code{n\_steps} cases with the $\sigma$SE. The latter is obtained by averaging the reward obtained over the last generation and over 10 experiments.}
+    \begin{tabular}{c|c|c}
+      \hline
+    \code{n\_steps} &  Mean Objective SE & $\sigma$SE \\
+     \hline
+        1 & -545.268 & 513.820 \\
+         2& -123.293 & 219.7689 \\
+         4 & \textcolor{red}{-14.705} &  \textcolor{red}{67.3678}\\
+         6& -46.059 & 76.1462\\
+         8& -81.982 &  138.7982\\
+         10& 162.167 & 208.8235\\
+         25&  -529.769 & 548.3574\\
+         35& -858.295 & 756.5167\\
+         75& -2020.529 & 1711.8901\\
+    \end{tabular}
+    \label{tab:nsteps_stats2}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{p-value for the NT between the \code{n\_steps} instances. The FT is successful with p equal to 0.0. Case \code{n\_steps} equal 4, 6 , and 10 are not statistically significantly different.}
+    \begin{tabular}{c|c|c|c|c|c|c|c|c|c}
+     \hline
+      ID & 1 & 2 & 4 & 6 & 8 & 10 & 25 & 35 & 75 \\
+     \hline
+     1  & 1.000000 & 0.512019 & \textcolor{red}{0.030146} & \textcolor{red}{0.003953} & 0.257126 & 0.079975 & 0.900000 & 0.900000 & 0.809296 \\ 
+     2  & - & 1.000000 & 0.900000 & 0.660658 & 0.900000 & 0.900000 & 0.710204 & 0.099098 & \textcolor{red}{0.009917} \\
+     4  & - & - & 1.000000 & 0.900000 & 0.900000 & 0.900000 & 0.079975 & \textcolor{red}{0.001473} & \textcolor{red}{0.001000} \\
+     6  & - & - & - & 1.000000 & 0.900000 & 0.900000 & \textcolor{red}{0.013263} & \textcolor{red}{0.001000} & \textcolor{red}{0.001000} \\
+     8  & - & - & - & - & 1.000000 & 0.900000 & 0.460015 & \textcolor{red}{0.030146} & \textcolor{red}{0.002063} \\
+     10 & - & - & - & - & - & 1.000000 & 0.180790 & \textcolor{red}{0.005415} & \textcolor{red}{0.001000} \\
+     25 & - & - & - & - & - & - & 1.000000 & 0.900000 & 0.611110 \\
+     35 & - & - & - & - & - & - & - & 1.000000 & 0.900000 \\
+    \end{tabular}
+    \label{tab:pvalue_nstepsstudy}
+\end{table}
+
+Additionally, the characteristics of the best patterns found are given in table \ref{tab:nstepsstudy_bestpattern}.  The dissimilarities are not as high as for the \code{NF} study of appendix \ref{sec:nf_study}, but fine-tuning \code{n\_steps} at a very fine level could have significant consequences. With \code{n\_steps} equal to 6 allows an economy of 0.033 \$/MWh compared to the best solution found with 4, which amounts to about 290,000 - 350,000 $\$/yr$ in benefit for a 1,000 or 1,200 MWe NPP, respectively. In this case, the boron's constraint is tight but the $F_q$'s one has more leeway, and agents trying to optimize or a designer taking over the core found could try to take penalties on the latter to improve the LCOE.
+
+Lastly, the 2D projection of the best pattern found is given in figure \ref{fig:bestpattern_nstespstudy}. The fuel placement is similar to that of figure \ref{fig:bestpattern_nfstudy} but the LCOE is lower. The average enrichment of this core is 4.35\% with an average burnup per assembly at 35.742 GWd/tHm, against 4.4\% and 35.414 GWd/tHm for the previous core. Even though the $F_{\Delta h}$ was lower for the previous core the $F_q$ was higher. Combined with a higher cycle length and lower pin peak Bu, it hints that the power profile must be spread out more evenly hence increasing the average burnup per FAs and the energy extracted at a lower enrichment cost reducing the LCOE.
+
+ \begin{table}[H]
+    \centering
+     \caption{Best patterns found for each case throughout all experiments. An Objective above - 5.00 signifies that the pattern is feasible and the agents are optimizing the LCOE only.}
+    \begin{tabular}{c|c|c|c|c|c|c|c}
+      \hline
+     \code{n\_steps} & Objective & LCOE & Cycle length & $F_q$ & $F_{\Delta h}$ & $C_b$ & Pin peak $Bu$\\
+     \hline
+         6    & \textcolor{red}{-4.523} & 5.523 & 513.9 & 1.811 & 1.443 & 1200 & 61.225\\
+         10   & -4.540 & 5.540 & 510.3 & 1.813 & 1.444 & 1168.9 & 60.548\\
+         8    & -4.544 & 5.540 & 507.8 & 1.822 & 1.449 & 1195.1 & 60.682\\
+         2    & -4.551 & 5.628 & 515.7 & 1.822 & 1.446 & 1186.9 & 61.446\\
+         4    & -4.556 & 5.556 & 510.6 & 1.841 & 1.438 & 1178.4 & 61.172\\
+         25   & -4.620 & 5.623 & 506.3 & 1.825 & 1.432 & 1161.7 & 61.910\\
+         1    & -4.616 & 5.616 & 504.7 & 1.832 & 1.449 & 1183.2 & 60.178 \\
+         35   & -6.400 & 5.610 & 501.6 & 1.857 & 1.456 & 1186.2 & 60.763\\
+         75   & -6.540 & 5.627 & 502.0 & 1.850 & 1.458 & 1146.3 & 62.154\\
+   \end{tabular}
+    \label{tab:nstepsstudy_bestpattern}
+\end{table}
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale = 1.4]{bestpattern_nstepsstudy.png}
+    \caption{Lower right quadrant for the best \code{n\_steps} case equal to 6. On the left, from top to bottom: Assembly group number, fuel average enrichment, number of IFBA rods, and number of WABA rods. Blue is for twice-burned FAs, green for once-burned, and red for fresh (colors pattern also utilized in ROSA \cite{verhagen1997rosa}). In violet, location where WABA cannot be placed. On the right, from top to bottom: Beginning of cycle $k_{\infty}$ and assembly average burnup, peak pin Burnup at EOC, and $F_{\Delta h}$ when the maximum over the cycle is reached. R means reflector, where the water is.}
+    \label{fig:bestpattern_nstespstudy}
+\end{figure}
+
+To conclude this section, we saw that \code{n\_steps} is a hyper-parameter that controls the \textit{exploration/exploitation} by playing with the bias/variance trade-offs in the estimation of the gradient of the PPO loss. A very low value may result in instability of the agents and being stuck in local optima. A higher value may result in slow learning and a poorer quality of the best pattern found. Due to the scope of the study (optimization over one day), favoring lower value is the path forward. For a longer run, it might be preferable to utilize larger values up to 10.
+
+\subsection{\code{ent\_coef} study}
+\label{sec:entcoef_study}
+Lastly, in this section we study the influence of the entropy coefficient \code{ent\_coef}. The entropy term is given by the entropy (a notion originating from information theory) of the distribution satisfied by the policy. This corresponds to the terms $H(\theta)$ and $c_2$ in equation \ref{eq:ppoloss}. The values 0, 0.00001, 0.0001, 0.001, and 0.01 (the default value in stable-baselines) are compared. Greater values than 0.01 were yielding very poor results and were omitted.
+
+The analysis of figure \ref{fig:entropystudy} demonstrates the role of the entropy in the \textit{exploration/exploitation} trade-off.  Higher entropy coefficients yield faster convergence and sometimes to lower optima, which is confirmed by the average max objective and mean objective SE columns of tables \ref{tab:entropy_stats} and \ref{tab:entcoef_studystats2}, respectively. The case without entropy has a higher $\sigma$ (MO) between the experiments even though it is supposed to have the highest exploitation. This could be explained by the fact that this entropy coefficient is too low, reaching a different sub-optimal solution anytime depending on the seed that steers initial random actions in different directions. The low mean objective SE and $\sigma$SE confirm this hypothesis. It converged sometimes to great, sometimes to poor local optima demonstrating signs of instability.
+
+With a low mean objective SE but a high $\sigma$SE, value 0.01 is not converging and is still learning but has found the second best pattern overall behind 0.001. The standard deviations ($\sigma$ (MO)) for the cases 0.001 and 0.01 throughout the experiments (table \ref{tab:entropy_stats}) are low compared to the others meaning that they are more stable. Moreover, their $\sigma$SE (table \ref{tab:entcoef_studystats2}) is high, meaning that they are both learning. The sweet spot is therefore located between 0.001 and 0.01. However, the case 0.001 is on average reproducing patterns of high quality (highest Avg (MO) above - 5.00 in table \ref{tab:entropy_stats}) and found an excellent pattern overall with the highest Best (MO). 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale = 0.6]{entropysutdy.png}
+    \caption{Error bar plots averaged over 10 experiments for Max (left) and Mean (right) Objective per episode for different \code{ent\_coef} values. The Mean was obtained by averaging the mean score obtained per episode within a window of X episodes, where X depends on the total number of samples generated (usually around 400 samples for \code{NF} equal to 1 to obtain 100 generations). The length of the bars is two $\sigma$.}
+    \label{fig:entropystudy}
+\end{figure}
+
+ The FT failed with a value of 0.267 and therefore no post-hoc tests were computed. More experiments is needed to reach statistical significance but due to the reasons stated above, we could safely conclude that lowering the entropy coefficient to 0.001 is the way forward.
+
+Looking at table \ref{tab:entcoefstudy_bestpattern}, we see that generally again, better LCOE will yield tighter constraints, except for the cycle length which could be higher. The 2D projection on the lower right quadrant of the best pattern overall found (with \code{ent\_coef} equal to 0.001) is given in figure \ref{fig:bestpattern_entcoefstudy}. Similar to the best pattern showcased in figures \ref{fig:bestpattern_nfstudy} and \ref{fig:bestpattern_nstespstudy} we can see typical rings of fire.
+
+ \begin{table}[H]
+    \centering
+     \caption{Statistics for each \code{ent\_coef} values over 10 experiments. MO stands for Max Objective. The best result for each column is highlighted in red. The Mean Objective SE is obtained by averaging the reward obtained over the last generation and over 10 experiments.}
+    \begin{tabular}{c|c|c|c|c}
+      \hline
+     \code{ent\_coef} & Avg (MO) & Best (MO) & $\sigma$ (MO) & IR (MO)  \\
+     \hline
+    0.00000 & -5.336 & -4.557 & 1.875 & 0.404 \\
+    0.00001 & -5.929 & -4.574 & 1.648 & 0.636 \\
+    0.0001  & -5.343 & -4.558 & 1.138 & 0.271 \\
+    0.001   & \textcolor{red}{-4.593} & \textcolor{red}{-4.529} & 0.0269  & 0.288 \\
+    0.01    & -4.599 & -4.556 & 0.0264 & 0.879 \\
+    \end{tabular}
+    \label{tab:entropy_stats}
+\end{table}
+\begin{table}[H]
+    \centering
+    \caption{Mean Objective SE for the different \code{weights} cases with the $\sigma$SE. The latter is obtained by averaging the reward obtained over the last generation and over 10 experiments. The $\sigma$SE, the standard deviation of the rewards in the last generation is also provided. The case \code{ent\_coef} equal to 0.001 has the highest mean objective SE and a high $\sigma$SE signifying potential for improvement for longer runs.}
+    \begin{tabular}{c|c|c}
+    \hline
+   \code{ent\_coef} &  Mean Objective SE & $\sigma$SE\\
+    \hline
+       0.00000 &  -16.231& 1.5563\\
+       0.00001 & -6.953 & \textcolor{red}{0.2092}\\ 
+       0.0001  & -5.691 & 2.5536\\ 
+       0.001   & \textcolor{red}{-5.109} & 11.5383\\
+       0.01    & -14.705& 67.3678  \\
+    \end{tabular}
+    \label{tab:entcoef_studystats2}
+\end{table}
+
+ \begin{table}[H]
+    \centering
+    \caption{Best patterns found for each case throughout all experiments. An Objective above - 5.00 signifies that the pattern is feasible and the agents are optimizing the LCOE only. The highest cycle length does not necessarily have the highest LCOE.}
+    \begin{tabular}{c|c|c|c|c|c|c|c}
+    %\toprule
+      \hline
+     \code{ent\_coef} & Objective & LCOE & Cycle length & $F_q$ & $F_{\Delta h}$ & $C_b$ & Pin peak $Bu$\\
+     \hline
+         0.001    & \textcolor{red}{-4.529} & 5.529 & 511.9 & 1.850 & 1.440 & 1182.8 & 61.185\\
+         0.01    & -4.556 & 5.556 & 510.6 & 1.841 & 1.438 & 1178.4 & 61.172\\
+         0.00000    & -4.557 & 5.557 & 510.9 & 1.819 & 1.444 & 1195.0 & 60.287\\
+         0.0001    & -4.558 & 5.558 & 516.0 & 1.826 & 1.434 & 1197.2 & 61.035\\
+         0.00001   & -4.574 & 5.574 & 510.0 & 1.782 & 1.448 & 1198.9 & 61.256\\
+   \end{tabular}
+    \label{tab:entcoefstudy_bestpattern}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale = 0.6]{bestpattern_boths_entcoef.png}
+    \caption{Lower right quadrant of the best pattern found obtained in the \code{ent\_coef} study. On the left, from top to bottom: Assembly group number, fuel average enrichment, number of IFBA rods, and number of WABA rods. Blue is for twice-burned FAs, green for once-burned, and red for fresh (colors pattern also utilized in ROSA \cite{verhagen1997rosa}). In violet, location where WABA cannot be placed. On the right, from top to bottom: Beginning of cycle $k_{\infty}$ and assembly average burnup, peak pin Burnup at EOC, and $F_{\Delta h}$ when the maximum over the cycle is reached. R means reflector, where the water is.}
+    \label{fig:bestpattern_entcoefstudy}
+\end{figure}
+
+To conclude this section, we saw that \code{ent\_coef} is a hyper-parameter that controls the \textit{exploration/exploitation} trade-off. Lower values yield faster convergence but are prone to local optima, because the final results may differ depending on the seeding as different directions of the search are early on preferentially locked on. On the other hand, a high value will result in slower convergence. A sweet spot between the speed of convergence, the quality of the pattern found, and the stability of the learning of the agent (i.e., low standard deviation throughout the experiments) was found with a value of 0.001. The latter helps find pattern rapidly but also provide the possibility to find an even better pattern with longer optimization thanks to the reasonably high $\sigma$SE at the last generation.  
+\section{Appendix 2: Alternate hyper-parameters studies}
+\label{appendix:appendixalternate}
+In this appendix we provide the results of the alternate hyper-parameters studies alluded in section \ref{sec:ppo_hyperparameters}. The entropy coefficient \code{ent\_coef} is set at 0.01. The \code{weights}, \code{NF}, and \code{n\_steps} were set at 25000, 1, and 4, respectively.
+
+\subsection{Learning rate \code{LR} study}
+\label{appendix:learningra}
+
+The learning rate is connected to the size of the steps taken in the gradient ascent algorithm that minimizes the loss of equation \ref{eq:ppoloss}. Figure \ref{fig:errorbar_learningratestudy} showcases the evolution of the mean reward per episode of the different values of \code{LR} studied. The behavior of the extreme cases are easily understood. The case 0.25 (green curve on the figure) reach a relatively high mean score early on probably because the learning step is high. However, there is no learning anymore because the steps remains high and the agents cannot manage to improve the pessimistic lower bound. The cases 0.000025 and 0.0000025 (purple and brown on the figure, respectively) are really unstable and are not learning. This may be explained because the learning step is very low. After one generation of samples, barely any learning is happening and the policy remains rather random. Then, new samples are generated randomly, and the distribution of data is probably very different from the previous generation, on which again barely any learning occurs. This then continues which is why we can see such oscillation with very low mean score. The case 0.00025 is then the case with  the smoothest learning. As highlighted in table  \ref{tab:learningrate_study} the closest in performance would be case 0.0025 but its mean objective SE is really low in comparison with the default 0.00025. Therefore we concluded that no study needed to be performed.
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale = 0.5]{bothlearningratestudy_errorbar.png}
+    \caption{Evolution of the Mean Score per episode (left) and Max Objective (right) overall found by the agents for the \code{LR} study.}
+    \label{fig:errorbar_learningratestudy}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \caption{Figure of Merits for the $\code{LR}$ study. The default case is highlighted in red.}
+    \begin{tabular}{c|c|c|c}
+    \hline
+    Learning Rate $\code{LR}$ values & Best (MO) & Mean Objective SE & $\sigma$SE \\
+    \hline
+     0.25    &  -1495.6822 &-3287.1906 & 1608.0369 \\
+     0.025    &  -377.6574 & -1111.4438 & 381.8044 \\
+     0.01   &   -63.9973 & -170.7374 &  57.0793\\
+     0.0025     & -4.6830 & -281.1334 & 420.0783\\
+     \textcolor{red}{0.00025}   & \textcolor{red}{-4.5820} & \textcolor{red}{-7.3352} & \textcolor{red}{25.7293}\\
+     0.000025   &-316.6459 & -12900.4038 &13898.8770\\
+     0.0000025  & -265.7414 & -15002.2054 & 18067.5745\\
+    \end{tabular}
+    \label{tab:learningrate_study}
+\end{table}
+
+
+
+\subsection{Clipping \code{Clip} study }
+\label{appendix:clipstudy}
+The clipping parameter \code{Clip} or $\epsilon$ is the parameter that ensure that the probability ratio $r_t(\theta) = \frac{\pi_{\theta}}{\pi_{\theta_{old}}}$ does not lies outside $[1-\epsilon,1+\epsilon]$ in equation \ref{eq:clipped_obj}. Figure \ref{fig:errorbar_clippingstudy} showcases the evolution of the mean reward per episode of the different values of $\epsilon$ studied. In all cases there seem to be a smooth learning.  Except for case 0.08, the higher the $\epsilon$, the faster the learning early on, although the best mean objective is reached for 0.02. From 0.0005 to 0.02, there seems to be a linear improvement in the final mean score. The lower values enables larger policy updates, which seem to penalize the learning by reaching out local optima, in other word by lacking exploration (recall that the learning is based on the sampled generated by the policy at the previous step). Table \ref{tab:clipping_study} confirms this hypothesis. The case 0.08 seems to prevent learning of the policy by having almost a flat mean score from generation 2 to 45. Then it seems to linearly improve and ends up outperforming all cases from 0.0005 to 0.01. This could be a manifestation of the \textit{exploration/exploitation} trade-off. 0.08 exhibits a high exploration compared to the other cases and after generation 45 it seems that it starts exploiting more. However, its performance remains very poor compared to the case 0.02 to 0.05 and even find the worst pattern overall. The case 0.01 found a relatively good pattern but with regard to its mean objective SE and $\sigma$SE, it is likely to have found it randomly. 
+
+The only cases that compete with the default of 0.02 are 0.03 and 0.05. However, the differences are not significant and 0.02 still exhibits a better behavior. Therefore, we concluded that we did not need to perform a study on this hyper-parameter.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale = 0.5]{bothclipstudy_errorbar.png}
+    \caption{Evolution of the Mean Score per episode (left) and Max Objective (right) overall found by the agents for the $\epsilon$ study.}
+    \label{fig:errorbar_clippingstudy}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \caption{Figure of Merits for the $\epsilon$ study. The default case is highlighted in red.}
+    \begin{tabular}{c|c|c|c}
+    \hline
+    Clipping values $\epsilon$ & Best (MO) & Mean Objective SE & $\sigma$SE \\
+    \hline
+     0.08    &  -174.9414 &  -1688.5742 & 999.7177\\
+     0.05    &  -4.6167 & -12.4381 & 30.2795\\
+     0.03   &  -4.6125 & -22.5631 & 107.8536\\
+     \textcolor{red}{0.02}     & \textcolor{red}{-4.5820} & \textcolor{red}{-9.9267}$^{\star}$ & \textcolor{red}{32.6367}\\
+     0.01   & -16.9908 & -1959.3510 & 3409.1235\\
+     0.005   & -135.6967 & -3168.8386 & 2934.9369\\
+     0.0005  & -107.5879 &  -4398.8450 & 3656.2877\\
+    \end{tabular}
+    \label{tab:clipping_study}\\
+    \begin{tablenotes}
+      \item  \footnotesize$^{\star}$The difference between the mean objective SE of table \ref{tab:learningrate_study} and table \ref{tab:clipping_study} is due to the difference between the number of samples generated during the search. The number of generation is normalized to the length of the case with the smallest number of generation (which is sometimes 101 or 100). here, the last mean is then taken at generation number 100 instead of 101 for the \code{LR} study. Interestingly the Mean Objective SE is higher at generation 100, signifying a high variance.
+    \end{tablenotes}
+\end{table}
+
+\subsection{\code{max\_grad\_norm} study}
+\label{appendix:maxgradnormstudy}
+
+\code{max\_grad\_norm} is such that $||\nabla_{\theta}L^{final}|| \le$ \code{max\_grad\_norm}, where $L^{final}$ is the loss of equation \ref{eq:ppoloss}. This is a parameter that control the upper bound of the gradient of the loss in the gradient ascent algorithm. This is a classical technique to avoid catastrophic updates of the weights of a deep learning model, in the context of stochastic gradient descent for instance. Indeed, the estimation of the loss is always local not global, therefore, the steps taken in the training must be controlled. Which is what limiting the gradient does. The clipping $\epsilon$ was initially derived to cover such possibility in PPO \cite{schulman2017proximal} as discussed in appendix \ref{appendix:clipstudy}.  If too many samples separated the different experiments, the mean objective SE and $\sigma$SE could differ too much and we would not be able to fairly compare each one of them. Therefore, we limited the number of samples ran during a day to a similar value of 43,000 to have a more fair comparison.
+
+Figure \ref{fig:maxgradnorm_study} showcases the evolution of the mean reward per episode of the different values of \code{max\_grad\_norm} studied. In all cases there seem to be a smooth learning and the differences are less drastic as for the $\epsilon$ study.  Most regular cases reached a feasible pattern as displayed in table \ref{tab:maxgradnorm_study}. There are no linear behavior of this parameter and the best cases in terms of SE metrics were 0.50 (the base case), 1.00, and 1.50. However, for 1.00 and 1.50 the $\sigma$SE is rather low and because of our choice of low entropy coefficient (see appendix \ref{sec:entcoef_study}), the final combination if we were to study this hyper-parameter may lead to early convergence to worse local optima. Case 1.20 could also be competitive, as its SE are close to that of case 0.5. Therefore, we decided to also study three cases where the entropy coefficient \code{ent\_coef} was divided by 10 (last three rows of table \ref{tab:maxgradnorm_study}). As expected, the $\sigma$SE is low as well as the Mean objective SE for cases 1.0 and 1.50. For case 1.20, the agent converged to a local optima with a very low $\sigma$SE. These values are to be compared with table \ref{tab:entcoef_studystats2}, where the best case presented a higher mean objective SE and higher $\sigma$SE. Therefore, we decided to not delve into more studies for \code{max\_grad\_norm}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.5]{bothmaxgradnormstudy_errorbar.png}
+    \caption{Evolution of the Mean Score per episode (left) and Max Objective (right) overall found by the agents for the \code{max\_grad\_norm} study.}
+    \label{fig:maxgradnorm_study}
+\end{figure}
+
+
+\begin{table}[H]
+    \centering
+    \caption{Figure of Merits for the \code{max\_grad\_norm} study. The default case is highlighted in red.}
+    \begin{tabular}{c|c|c|c}
+    \hline
+     \code{max\_grad\_norm} values & Best (MO) & Mean Objective SE & $\sigma$SE \\
+    \hline
+     0.10   &-4.6085 & -22.6228 & 67.2356 \\
+     0.20   &-4.6057& -27.8003 & 56.1412 \\
+     \textcolor{red}{0.50}   &\textcolor{red}{-4.5820}& \textcolor{red}{-7.3352} &  \textcolor{red}{25.7293} \\
+     0.80   &-4.6080& -25.8551 &  76.1472 \\
+     1.00   &-4.5701& -7.6252 &  9.4603 \\
+     1.20   &-4.5578& -8.7399 &  36.3495 \\
+     1.50   &-4.6241& -6.1963 & 12.7045 \\
+     1.0  + \code{ent\_coef} = 0.001 &-5.6643& -5.9101 & 4.9734 \\
+     1.2  + \code{ent\_coef} = 0.001 &-8.9469& -9.9184 & 0.3805 \\
+     1.5  + \code{ent\_coef} = 0.001 & -11.7771 & -14.9618 & 7.7478 \\
+    \end{tabular}
+    \label{tab:maxgradnorm_study}
+\end{table}
+
+
+
+\subsection{\code{noptepochs} study}
+\label{appendix:noptepochsstudy}
+The parameter \code{noptepochs} is the parameter that control the number of steps in the gradient ascent algorithm to maximize the surrogate loss of equation \ref{eq:ppoloss}. Figure \ref{fig:errorbar_noptepochsstudy} showcases the evolution of the mean reward per episode of the different values of \code{noptepochs} studied. There is a smooth learning for all cases except for case 1 (purple on the left hand-side of figure \ref{fig:errorbar_noptepochsstudy}). This might be due to the fact that one step only prevents any learning and the weights of the neural architecture representing the policy are not converging to anything. The cases 5 and 10 largely outperform the others. This is confirmed by table \ref{tab:noptepochs_study}. 
+
+On the other hand, early on, lower \code{noptepochs} leads to faster learning. This may be counter-intuitive, as higher \code{noptepochs} means more exploitation of the information given by the samples generated by the policy. However, one could imagine that the original samples generated by the un-trained policy are random or at least representing low quality patterns. Therefore, the cases with higher \code{noptepochs} are exploiting random or low-quality actions resulting in poor learning. From case 10 to 30 the $\sigma$SE increases, indicating that more epochs leads to more exploration. This is the same for the Best (MO) and almost the same for the mean objective SE with the exception of case 20. However, the figure on the left of figure \ref{fig:errorbar_noptepochsstudy} seems to indicate a random local drop in performance at the last generation for case 20, which may be due to the randomness of the policy. Table \ref{tab:lossrelated_fomsnoptepochs} seems to hint about why higher \code{noptepochs} leads to higher $\sigma$SE. The \code{clipfrac} increases with \code{noptepochs}. This might be explained by the fact that the policy is more different with more steps in the gradient ascent, hence increasing the likelihood of changing the policy more. Therefore, the steps taken are less controlled yielding instability in learning. As a consequence, the entropy remains high (see table \ref{tab:lossrelated_fomsnoptepochs}) and the policy remains more random. The sweet spot is then between 5 and 10.
+
+Only the case 5 competed with the default case 10, but the differences were not significant enough and we decided to not delve into any more study.
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale = 0.5]{bothnoptepochsstudy_errorbar.png}
+    \caption{Evolution of the Mean Score per episode (left) and Max Objective (right) overall found by the agents for the \code{noptepochs} study.}
+    \label{fig:errorbar_noptepochsstudy}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \caption{Figure of Merits for the \code{noptepochs} study. The default case is highlighted in red.}
+    \begin{tabular}{c|c|c|c}
+    \hline
+    \code{noptepochs} values & Best (MO) & Mean Objective SE & $\sigma$SE \\
+    \hline
+     1    &  -278.2698 & -13133.0550 & 18291.9926\\
+     5    & -4.6176 & -18.0850 & 36.5557\\
+     \textcolor{red}{10}   &  \textcolor{red}{-4.5820} & \textcolor{red}{-9.9267} & \textcolor{red}{32.6367}\\
+     15     & -38.1449 & -1747.9683 & 1355.6888\\
+     20   & -157.1052 & -4890.5444 & 3636.5023\\
+     25   & -156.3375 &-4518.5616 & 4608.1392\\
+     30  & -210.1378 & -4894.9650 & 5039.9094\\
+    \end{tabular}
+    \label{tab:noptepochs_study}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Loss related Figure of Merits for \code{noptepochs}. \code{clipfrac} is the fraction for which the probability ratio is outside the $[1-\epsilon,1+\epsilon]$ range. The default case is highlighted in red.}
+    \begin{tabular}{c|c|c|c|c|c}
+    \hline
+    \code{noptepochs} & \code{approx\_kl} & \code{clipfrac} & $\mathbb{H}$ & $L^{CLIP}$ & \code{VF\_loss} \\
+    \hline
+    1 & 1.2905e-7 & 0.0 & 67.49082 & -6.8025e-5 & 136777920.0\\
+    5 & 6.944e-4 & 0.0 & 28.1128 & -8.3063e-3 & 42998.188\\
+    \textcolor{red}{10} & \textcolor{red}{2.8199e-2} & \textcolor{red}{0.2875} & \textcolor{red}{44.3150} & \textcolor{red}{-4.0714e-2} & \textcolor{red}{218030.05}\\
+    15 & 1.0937e-1 & 0.5615 & 62.2872 & -9.7497e-2 & 2916480.0\\
+    20 & 1.0234e-1 & 0.6555 & 65.1677 & -9.7205e-2 & 13611875.0\\
+    25 & 1.1506e-1 & 0.7391 & 65.6561 & -1.1411e-1 & 16522170.0\\
+    30 & 1.1097e-1 & 0.7560 & 65.8907 & -1.0928e-1 & 25375224.0\\
+    \end{tabular}
+    \label{tab:lossrelated_fomsnoptepochs}
+\end{table}
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.9]{noptepochs_lossfoms.jpg}
+    \caption{Evolution of the loss-related FOMs for the \code{noptepochs} study. The results are plotted on a log scale for all except for the policy loss $L^{CLIP}$. For cases 5 and 10 the losses evolve as expected while for the other cases the learning is much less smooth.}
+    \label{fig:noptepochs_lossFOM}
+\end{figure}
+
+\subsection{\code{nminibatches} study}
+\label{appendix:nminibatchesstudy}
+\code{nminibatches} (line 16 or algorithm \ref{alg:ppopseudocode}) is the number of mini batches used in training during a step of the algorithm. Essentially, the size of the batches for training is equal to $\frac{\text{\code{n\_steps}} \times \text{\code{ncores}}}{\text{\code{nminibatches}}}$. As showcased in figure \ref{fig:nminibatches_study}, all cases exacerbate a smooth learning. We stopped at 64 because there are no observed policy learning for the case 128 and greater values would not be possible since \code{n\_steps} $\times$ \code{ncores} is equal to the latter.
+
+Overall, a higher value of this parameter lead to slower learning. However, there seem to be a sweet spot for the case equal to 4. There, the size of the batches is equal to the number of cores. Both SE measures are better even though the case 2 found a high quality pattern with only a difference in magnitude about 0.01 in the LCOE. It could be interesting to see what happens when the ratio  $\frac{\text{\code{n\_steps}}}{\text{\code{nminibatches}}}$ is kept constant and we left that for future work. Above 4, the behavior seems to remain linear. Only 16 found a worse best pattern than 32, but regarding the high $\sigma$SE of table \ref{tab:nminibatches_study}, it must have been found randomly.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.5]{bothnminibatchesstudy_errorbar.png}
+    \caption{Evolution of the Mean Score per episode (left) and Max Objective (right) overall found by the agents for the \code{nminibatches} study.}
+    \label{fig:nminibatches_study}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \caption{Figure of Merits for the \code{nminibatches} study. The default case is highlighted in red.}
+    \begin{tabular}{c|c|c|c}
+    \hline
+    \code{nminibatches} values & Best (MO) & Mean Objective SE & $\sigma$SE \\
+    \hline
+     2   &-4.5918   &-31.8550 & 95.3676\\
+     \textcolor{red}{4}   &\textcolor{red}{-4.5820}   & \textcolor{red}{-9.9267}  & \textcolor{red}{32.6367}\\
+     8   &-40.6294  &-2002.2990  & 2694.3910\\
+     16  &-99.5715  &-2669.2012  & 2501.2163\\
+     32  &-93.1650  &-2900.84154  & 2621.0595\\
+     64  &-149.1445 &-4104.2863 & 4151.5750\\
+     128 &-287.3326 &-16225.4743 & 20260.0626\\
+    \end{tabular}
+    \label{tab:nminibatches_study}
+\end{table}
+
+\subsection{$\lambda$ and $\gamma$ studies}
+\label{appendix:lambdagammastudy}
+In PPO, the advantage function is estimated via Generalized Advantage Estimation (GAE) \cite{schulman2017proximal}. %as described in the equation \ref{eq:gaeequation}.
+The latter represents an exponential average of the advantage function with parameter $\lambda$. This estimate suffers from the bias-variance trade-off and the $\lambda$ parameter helps control it. Greater value of $\lambda$ will decrease the bias of the estimator by allow greater contribution to later states (up to max(\code{NF},\code{n\_steps}) for each agent) at the cost of increasing the variance due to the presence of more terms. Because the length of the episode is 1, neither $\lambda$ or $\gamma$ should influence the algorithm. The only differences observed by running different values must be due to the randomness of the policies resulting in slightly different SE measures. Indeed, the advantage estimation becomes \cite{schulman2018high}:
+\begin{equation} A_{\pi_{\theta}}(s_0,a_0;\theta) = r_0 + \gamma \mathbb{E}(V(s_1)) - V(s_0) = r_0 - V(s_0)\end{equation}
+
+$\gamma$ is the discount factor in the cumulative reward, which is a sum over one term. Therefore, no study are presented here.
+
+\subsection{\code{VF\_coef} study}
+\label{appendix:vfcoefstudy}
+\code{VF\_coef} is the weight assigned to the value function's term in the PPO loss of equation \ref{eq:ppoloss}. The algorithm was very sensitive to this term. It turned out that the number of samples for this particular case in the configuration studied had a big impact on the figure of merits found. We used 43,000 as the maximum number of samples. Figure \ref{fig:vfcoef_study} showcases the evolution of the mean score per episode and max objective for the \code{VF\_coef} study.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.5]{bothvfcoefstudy_errorbar.png}
+    \caption{Evolution of the Mean Score per episode (left) and Max Objective (right) overall found by the agents for the \code{VF\_coef} study.}
+    \label{fig:vfcoef_study}
+\end{figure}
+
+In all cases, there is a smooth learning. Case 2 finds a feasible pattern slower than the others, as if it spent more time exploring. It is interesting to see that, except for case 1.5, the lower the \code{VF\_voef}, the higher the mean objective SE and the lower the $\sigma$SE as displayed in table \ref{tab:vfstudy_study}. Reducing the impact of the value function in the loss seems to increase the exploitation. We first hypothesized that reducing the impact of the value function would increase the speed of the convergence of the policy loss. Therefore, we tried to find an explaination looking at the loss FOMsuch as in table \ref{tab:lossrelated_fomsnoptepochs} via table \ref{tab:lossrelated_fomsvfcoef}. Nevertheless, no clear behaviors were drawn. The impact of \code{VF\_coef} cannot be explained by only looking at loss-related performance metrics, especially with the particular case 1.5. Several interesting explanation removing case 1.5 can be however made. Comparing the entropy of case 0.2 to 1.0 versus 1.2, we can say that a lower entropy does not result in a high mean objective or $\sigma$SE. Similarly, for 0.2 to 0.8, a better policy or value function loss results in a higher mean objective SE and lower $\sigma$SE. The case 1.0 and 2.0 both have a better policy loss but a much worse value function loss, resulting in a lower mean objective SE and higher $\sigma$SE. It seems that there is a trade-offs between the losses but that the value loss has a greater impact. This is confirmed by comparing 2.0 and 1.2. 2.0 exacerbates a worse SEs even though the policy losses improve about twice as much.
+
+
+
+\begin{table}[H]
+    \centering
+    \caption{Figure of Merits for the \code{VF\_coef} study. The default case is highlighted in red.}
+    \begin{tabular}{c|c|c|c}
+    \hline
+    \code{VF\_coef} values & Best (MO) & Mean Objective SE & $\sigma$SE \\
+    \hline
+0.20&-4.6097 & -5.71826 & 10.7914\\
+0.5&-4.5756 & -5.6684 & 9.6340 \\
+0.8&-4.5967 & -6.2679 & 15.4157\\
+\textcolor{red}{1.0}&\textcolor{red}{-4.5820} & \textcolor{red}{-7.3352} &\textcolor{red}{ 25.7293}\\
+1.2&-4.6216 & -11.2973 & 44.7394\\
+1.5&-4.6335 & -7.3875 & 20.6081\\
+2.0&-4.6148 & -22.6870 & 45.4516\\
+0.8 + \code{ent\_coef} = 0.001 & 4.59014 & -4.863 & 5.4473 \\
+    \end{tabular}
+    \label{tab:vfstudy_study}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Loss related Figure of Merits for \code{VF\_coef}. The default case is highlighted in red.}
+    \begin{tabular}{c|c|c|c}
+    \hline
+    \code{VF\_coef} & $\mathbb{H}$ & $L^{CLIP}$ & \code{VF\_loss} \\
+    \hline
+    0.2 & 9.0399 & -0.0372 & 468.7824 \\
+    0.5 & 12.3117 & -0.0346 & 872.3915 \\
+    0.8 & 3.9508 & -0.0438 & 573.3726 \\
+    \textcolor{red}{1.0} & \textcolor{red}{4.0087} & \textcolor{red}{-0.0274} & \textcolor{red}{1248.4656} \\
+    1.2 & 5.7303 & -0.0507 & 1588.7722 \\
+    2.0 & 15.1559 & -0.0135 & 2906.0786 \\
+    0.8  + \code{ent\_coef} = 0.001 & 0.0696 & -0.0046 & 0.64881 \\
+    \end{tabular}
+    \label{tab:lossrelated_fomsvfcoef}
+\end{table}
+
+A nice trade-off could be to utilize a value of 0.8 for \code{VF\_coef} because the mean objective SE is higher than for the case 1.0 and the best pattern found is very close. Nevertheless, the $\sigma$SE is at 15.4157 and we made the choice of reducing the entropy in appendix \ref{sec:entcoef_study}, which already reduced the $\sigma$SE with a better mean objective SE. We would risk to reach a worse local optima if we combined it with a lower \code{VF\_coef} value. To verify that, we also ran a case with \code{VF\_coef} and \code{ent\_coef} equal to 0.8 and 0.001, respectively (last row of table \ref{tab:vfstudy_study}). There, the best pattern found was worse than the base case, and the $\sigma$SE is much lower. Keep in mind that these hyper-parameters may be used to pursue further study and the latter value is too low, meaning that the algorithm was already too close to converge. Therefore, we decided not to pursue deeper studies with this parameter or another combination with \code{ent\_coef}.
+
+
+\subsection{Depth and breadth of the architecture studies}
+\label{appendix:architecturestudy}
+The depth of the neural architecture representing the policy corresponds to the number of hidden layer in the neural network. The breadth is the number of hidden nodes per layer. The number of hidden nodes is equal to 64 or 32.  Figure \ref{fig:errorbar_architecturestudy} showcases the evolution of the mean reward per episode of the different values of the depth and breadth studied. In all cases there is a smooth learning. The effect on the number of hidden layer is small compared to the other hyper-parameters studied in this appendix. The breadth has an impact on the learning as for each case the mean objective SE and $\sigma$SE are lower and higher, respectively, as shown in table \ref{tab:architecture_study}. The best patterns found seem to also be better for smaller number of nodes. 
+
+Another interesting behavior is that the best patterns are found faster when the number of hidden nodes is divided by two as confirmed by figure \ref{fig:errorbar_architecturestudy}. However, the mean objective SE is smaller and the $\sigma$SE higher. In this case what might have happened is that it took more samples for cases with 64 hidden nodes to learn to reproduce better patterns but they managed to produce pattern closer to a better optima because of a better understanding of the search space. The number of hidden nodes therefore plays a role in the \textit{exploration/exploitation} trade-off.
+
+No cases are close to convergence except case 4. There the mean objective SE is lower than - 5.00, meaning that a feasible pattern is not always found in average. What might have happened is that it overfitted towards lower optima due to its larger number of trainable parameters. On top of that, the behavior of the number of hidden layer is opposite when having 64 or 32 nodes. For cases with 64 nodes, the cases 2 and 3 have a higher mean objective SE and $\sigma$SE, which is the opposite for cases with 32 hidden nodes. Moreover, the case 4 + 32 is really far from convergence and has found an excellent best pattern very rapidly. It is as if removing nodes per layer smoothed out its learning and enable to escape local optima.  The default value of 2 exacerbates a higher mean objective SE and $\sigma$SE, promising more potential for improvement and stability if utilized for further optimization. Overall, most of the cases competed with the default case 2 but the differences are not large enough and we concluded that we did not need to delve into more studies.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale = 0.5]{botharchitecture_study.png}
+    \caption{Evolution of the Mean Score per episode (left) and Max Objective (right) overall found by the agents for the depth and breadth of the architecture studies.}
+    \label{fig:errorbar_architecturestudy}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \caption{Figure of Merits for the depth and breadth of the architecture studied. Cases 1, 2, 3, and 4 have 64 hidden nodes per layer. The default case is highlighted in red. 43,000 samples were drawn.}
+    \begin{tabular}{c|c|c|c}
+    \hline
+    Depth values $\epsilon$ & Best (MO) & Mean Objective SE & $\sigma$SE \\
+    \hline
+     1      & -4.5892                            & -6.8169 & 19.2774\\
+     \textcolor{red}{2}      & \textcolor{red}{-4.6006$^{\star}$} & \textcolor{red}{-7.9264} & \textcolor{red}{23.4465}\\
+     3      & -4.6101                            & -6.2860 & 26.1353\\
+     4      & -4.6158                            & -5.0907 & 5.63168\\
+     1 + 32 & -4.5999                            & -22.4148 & 59.2805\\
+     2 + 32 & -4.5699                            & -13.1631 & 22.2361\\
+     3 + 32 & -4.6480                            & -16.9550 & 39.3686\\
+     4 + 32 & -4.5973                            & -33.7441 & 194.4261\\
+     \end{tabular}
+    \label{tab:architecture_study}\\
+    \begin{tablenotes}
+      \item  \footnotesize$^{\star}$The difference between the average standard deviation in table \ref{tab:architecture_study} and table \ref{tab:entcoef_studystats2} is that here the experiment were ran once with more samples. Looking at experiment per experiment, in some instances, the algorithm ran longer and a generation covered more time-steps, increasing the $\sigma$SE.
+    \end{tablenotes}
+\end{table}
