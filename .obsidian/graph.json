@@ -1,0 +1,10 @@
+{"showAttachments": true, "showOrphans": true, "showArrow": true,
+ "colorGroups": [
+  {"query": "path:ontology", "color": {"a": 1, "rgb": 9474192}},
+  {"query": "[status:открыта OR \"в работе\" OR заблокирована]", "color": {"a": 1, "rgb": 14254635}},
+  {"query": "path:tasks", "color": {"a": 1, "rgb": 16761685}},
+  {"query": "[type:Модель OR Ограничение]", "color": {"a": 1, "rgb": 3125434}},
+  {"query": "[type:Утверждение OR Доказательство]", "color": {"a": 1, "rgb": 1153422}},
+  {"query": "[type:Источник]", "color": {"a": 1, "rgb": 2322395}},
+  {"query": "path:notes OR path:reports", "color": {"a": 1, "rgb": 5987296}}
+ ]}

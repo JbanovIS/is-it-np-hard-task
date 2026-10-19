@@ -6,8 +6,13 @@
 - `results/claims.csv` — проверенное утверждение (строка 299 Manuscripts.tex), utf-8-sig.
 - Проверка `checks/check_review.py` пройдена (код 0).
 
+## Сделано в этой сессии
+- Восстановлены обнулённые `results/review.md`, `results/claims.csv`, `memory/notes.md` из git (коммит b1ee877).
+- Созданы заметки классов в `ontology/` (9 классов по `ontology.yaml`).
+- Обновлены `.obsidian/app.json` и `.obsidian/graph.json` по AGENTS.md 2.1.
+
 ## Дальше
-Работа завершена. Новых шагов нет.
+Работа завершена. Новых шагов нет. Жду задачу от пользователя.
 
 ## Действует
 - Не изменять файлы в `paper/` и `checks/`.
