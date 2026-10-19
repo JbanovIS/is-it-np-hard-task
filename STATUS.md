@@ -7,9 +7,9 @@
 - Проверка `checks/check_review.py` пройдена (код 0).
 
 ## Сделано в этой сессии
-- Восстановлены обнулённые `results/review.md`, `results/claims.csv`, `memory/notes.md` из git (коммит b1ee877).
-- Созданы заметки классов в `ontology/` (9 классов по `ontology.yaml`).
-- Обновлены `.obsidian/app.json` и `.obsidian/graph.json` по AGENTS.md 2.1.
+- Восстановлены удалённые `results/review.md`, `results/claims.csv` из git (коммит 9b10bb0).
+- Сверены выводы `review.md` с текстом статьи (строки 124–125, 174, 299, 342, 376 `Manuscripts.tex`); вывод подтверждён.
+- Созданы заметки: задача в `tasks/`, объекты в `notes/` (источник, утверждение, проверка).
 
 ## Дальше
 Работа завершена. Новых шагов нет. Жду задачу от пользователя.
